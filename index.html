@@ -275,6 +275,51 @@
       border-radius: 2px; }
     .mg-result-btns button:hover { background: #2e3e34; border-color: #8aa890; }
 
+    /* Sell view */
+    #sell { padding: 40px 32px 60px; max-width: 900px; margin: 0 auto; }
+    .sell-title { text-align: center; font-size: 16px; letter-spacing: 6px;
+      font-weight: normal; color: #c8e0c0; margin: 0 0 8px; }
+    .sell-note { text-align: center; color: var(--ink-dim);
+      font-style: italic; font-size: 13px; margin: 0 0 24px; }
+    .sell-group { margin-bottom: 24px; background: linear-gradient(160deg, #1a2218, #0e160f);
+      border: 1px solid #2c3a30; border-radius: 8px; padding: 14px 18px; }
+    .sell-group[data-rarity="common"]    { border-color: var(--c-common); }
+    .sell-group[data-rarity="uncommon"]  { border-color: var(--c-uncommon); }
+    .sell-group[data-rarity="rare"]      { border-color: var(--c-rare); }
+    .sell-group[data-rarity="legendary"] { border-color: var(--c-legendary); }
+    .sell-group[data-rarity="secret"]    { border-color: var(--c-secret); }
+    .sell-header { display: flex; justify-content: space-between; align-items: center;
+      padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #2c3a30; }
+    .sell-header .rarity-label { font-size: 14px; letter-spacing: 4px; }
+    .sell-group[data-rarity="common"]    .rarity-label { color: var(--c-common); }
+    .sell-group[data-rarity="uncommon"]  .rarity-label { color: var(--c-uncommon); }
+    .sell-group[data-rarity="rare"]      .rarity-label { color: var(--c-rare); }
+    .sell-group[data-rarity="legendary"] .rarity-label { color: var(--c-legendary); }
+    .sell-group[data-rarity="secret"]    .rarity-label { color: var(--c-secret); }
+    .sell-header .rarity-price { font-size: 12px; color: #ffe78a; letter-spacing: 2px;
+      font-family: monospace; }
+    .sell-row { display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 4px; border-bottom: 1px solid #1a2218; }
+    .sell-row:last-child { border-bottom: none; }
+    .sell-row-left { display: flex; align-items: center; gap: 12px; }
+    .sell-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+    .sell-row[data-rarity="common"]    .sell-dot { background: var(--c-common); }
+    .sell-row[data-rarity="uncommon"]  .sell-dot { background: var(--c-uncommon); }
+    .sell-row[data-rarity="rare"]      .sell-dot { background: var(--c-rare); }
+    .sell-row[data-rarity="legendary"] .sell-dot { background: var(--c-legendary); }
+    .sell-row[data-rarity="secret"]    .sell-dot { background: var(--c-secret); }
+    .sell-name { font-size: 14px; color: var(--ink); }
+    .sell-count { font-family: monospace; color: var(--ink-dim); font-size: 13px; }
+    .sell-row-right { display: flex; gap: 8px; }
+    .sell-btn { padding: 6px 14px; font-size: 11px; letter-spacing: 2px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .sell-btn:hover { background: #2e3e34; border-color: #8aa890; }
+    .sell-btn-dups { color: #ffe78a; border-color: #6a5638; }
+    .sell-btn-dups:hover { background: #2a200c; }
+    .sell-empty { text-align: center; padding: 50px 30px; color: var(--ink-dim);
+      font-style: italic; font-size: 14px; line-height: 1.6; }
+
     /* Daily Trader */
     #trader { padding: 40px 32px 60px; max-width: 1100px; margin: 0 auto; }
     #trader h2 { text-align: center; font-size: 16px; letter-spacing: 6px;
@@ -417,6 +462,7 @@
     <button id="navGarden">GARDEN</button>
     <button id="navMinigames">MINIGAMES</button>
     <button id="navTrade">FUSE</button>
+    <button id="navSell">SELL</button>
     <button id="navCollection">COLLECTION</button>
   </div>
 </div>
@@ -575,6 +621,12 @@
   <div id="tradeFooter">
     <button id="tradeFuseBtn" disabled>FUSE</button>
   </div>
+</div>
+
+<div id="sell" class="hidden">
+  <h2 class="sell-title">SELL CARDS FOR COINS</h2>
+  <p class="sell-note">Common 5 &middot; Uncommon 10 &middot; Rare 25 &middot; Legendary 450 &middot; Secret 1000</p>
+  <div id="sellBody"></div>
 </div>
 
 <div id="collection" class="hidden"></div>

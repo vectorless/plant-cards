@@ -20,6 +20,14 @@ export const TRADER_PRICES = {
   secret: 1500,
 };
 
+export const SELL_PRICES = {
+  common: 5,
+  uncommon: 10,
+  rare: 25,
+  legendary: 450,
+  secret: 1000,
+};
+
 export const DAILY_BONUS = 200;
 
 export function todayKey() {
