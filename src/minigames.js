@@ -96,7 +96,9 @@ function startBalls() {
   const BALLS = 10;
   const BOMBS = 4;
   const DURATION = 15;
-  const SIZE = 26;
+  const VISUAL = 26;
+  const HIT = 52;
+  const SIZE = HIT;
   let caught = 0;
   let timeLeft = DURATION;
   let ended = false;
@@ -125,21 +127,33 @@ function startBalls() {
       alive: true,
     };
     ent.el.className = 'mg-ball';
-    ent.el.style.width = ent.el.style.height = SIZE + 'px';
+    ent.el.style.width = ent.el.style.height = HIT + 'px';
+    ent.el.style.background = 'transparent';
+    ent.el.style.boxShadow = 'none';
+    ent.el.style.borderRadius = '0';
+    const visual = document.createElement('div');
+    visual.className = 'mg-ball-visual';
+    visual.style.cssText =
+      `position: absolute; left: 50%; top: 50%;
+       width: ${VISUAL}px; height: ${VISUAL}px;
+       transform: translate(-50%, -50%);
+       border-radius: 50%; pointer-events: none;
+       box-shadow: 0 4px 10px rgba(0,0,0,0.5);`;
     if (isBomb) {
-      ent.el.style.background =
+      visual.style.background =
         'radial-gradient(circle at 30% 30%, #6a3030 0%, #2a0a0a 70%, #000 100%)';
-      ent.el.style.border = '2px solid #c44040';
-      ent.el.textContent = '✖';
-      ent.el.style.color = '#ff8a8a';
-      ent.el.style.textAlign = 'center';
-      ent.el.style.lineHeight = (SIZE - 4) + 'px';
-      ent.el.style.fontWeight = 'bold';
+      visual.style.border = '2px solid #c44040';
+      visual.textContent = '✖';
+      visual.style.color = '#ff8a8a';
+      visual.style.textAlign = 'center';
+      visual.style.lineHeight = (VISUAL - 4) + 'px';
+      visual.style.fontWeight = 'bold';
     } else {
       const c = BALL_COLORS[Math.floor(Math.random() * BALL_COLORS.length)];
-      ent.el.style.background =
+      visual.style.background =
         `radial-gradient(circle at 30% 30%, #fff 0%, ${c} 40%, ${shade(c, -25)} 100%)`;
     }
+    ent.el.appendChild(visual);
     ent.el.addEventListener('click', (e) => {
       e.stopPropagation();
       if (ended || !ent.alive) return;
