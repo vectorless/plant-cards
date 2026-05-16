@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/plant-cars/',
+  base: '/plant-cards/',
   server: {
     host: '127.0.0.1',
     port: 5173
