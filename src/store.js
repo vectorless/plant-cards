@@ -16,6 +16,7 @@ export function loadState() {
     state.seeds = mergeSeeds(data.seeds);
     state.pots = mergePots(data.pots);
     state.watering = mergeWatering(data.watering);
+    state.lastDailyClaim = typeof data.lastDailyClaim === 'string' ? data.lastDailyClaim : null;
   } catch (e) {
     resetDefaults();
   }
@@ -28,6 +29,7 @@ function resetDefaults() {
   state.seeds = { common: 0, uncommon: 0, rare: 0, legendary: 0, secret: 0 };
   state.pots = [null, null, null];
   state.watering = { common: 0, uncommon: 0, rare: 0 };
+  state.lastDailyClaim = null;
 }
 
 function mergeWatering(w) {
@@ -70,6 +72,7 @@ export function saveState() {
     seeds: state.seeds,
     pots: state.pots,
     watering: state.watering,
+    lastDailyClaim: state.lastDailyClaim,
   };
   localStorage.setItem(KEY, JSON.stringify(data));
 }

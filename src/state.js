@@ -5,9 +5,28 @@ export const state = {
   seeds: { common: 0, uncommon: 0, rare: 0, legendary: 0, secret: 0 },
   pots: [null, null, null],
   watering: { common: 0, uncommon: 0, rare: 0 },
+  lastDailyClaim: null,
   view: 'shop',
   opening: null,
 };
+
+export const DAILY_BONUS = 200;
+
+export function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function dailyEligible() {
+  return state.lastDailyClaim !== todayKey();
+}
+
+export function claimDaily() {
+  if (!dailyEligible()) return false;
+  state.coins += DAILY_BONUS;
+  state.lastDailyClaim = todayKey();
+  return true;
+}
 
 export const GROW_TIMES_MS = {
   common: 30_000,
