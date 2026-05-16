@@ -17,6 +17,9 @@ export function loadState() {
     state.pots = mergePots(data.pots);
     state.watering = mergeWatering(data.watering);
     state.lastDailyClaim = typeof data.lastDailyClaim === 'string' ? data.lastDailyClaim : null;
+    state.traderDate = typeof data.traderDate === 'string' ? data.traderDate : null;
+    state.traderPurchased = Array.isArray(data.traderPurchased) && data.traderPurchased.length === 3
+      ? data.traderPurchased.map(Boolean) : [false, false, false];
   } catch (e) {
     resetDefaults();
   }
@@ -30,6 +33,8 @@ function resetDefaults() {
   state.pots = [null, null, null];
   state.watering = { common: 0, uncommon: 0, rare: 0 };
   state.lastDailyClaim = null;
+  state.traderDate = null;
+  state.traderPurchased = [false, false, false];
 }
 
 function mergeWatering(w) {
@@ -73,6 +78,8 @@ export function saveState() {
     pots: state.pots,
     watering: state.watering,
     lastDailyClaim: state.lastDailyClaim,
+    traderDate: state.traderDate,
+    traderPurchased: state.traderPurchased,
   };
   localStorage.setItem(KEY, JSON.stringify(data));
 }

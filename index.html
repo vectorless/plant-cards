@@ -275,6 +275,26 @@
       border-radius: 2px; }
     .mg-result-btns button:hover { background: #2e3e34; border-color: #8aa890; }
 
+    /* Daily Trader */
+    #trader { padding: 40px 32px 60px; max-width: 1100px; margin: 0 auto; }
+    #trader h2 { text-align: center; font-size: 16px; letter-spacing: 6px;
+      font-weight: normal; color: #c8e0c0; margin: 0 0 10px; }
+    .trader-note { text-align: center; color: var(--ink-dim);
+      font-style: italic; font-size: 13px; margin: 0 0 32px; }
+    #traderSlots { display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 28px; justify-items: center; }
+    .trader-slot { display: flex; flex-direction: column; align-items: center;
+      padding: 22px 18px; background: linear-gradient(160deg, var(--bg-2), #0e160f);
+      border: 1px solid #34483a; border-radius: 8px; width: 100%; max-width: 240px; }
+    .trader-slot .card { width: 180px; height: 260px; margin-bottom: 16px; }
+    .trader-price { font-size: 18px; letter-spacing: 3px; color: #ffe78a;
+      margin-bottom: 14px; font-family: 'Georgia', serif; }
+    .trader-buy { padding: 10px 28px; font-size: 13px; letter-spacing: 4px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 2px; cursor: pointer; font-family: inherit; }
+    .trader-buy:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
+    .trader-buy:disabled { opacity: 0.4; cursor: not-allowed; }
+
     /* Trade view */
     #trade { padding: 40px 32px 100px; max-width: 1200px; margin: 0 auto; }
     #tradeHeader { text-align: center; }
@@ -393,6 +413,7 @@
   <div id="coins"><span class="lbl">COINS</span><span id="coinAmount">0</span></div>
   <div id="navBtns">
     <button id="navShop" class="active">SHOP</button>
+    <button id="navTrader">TRADER</button>
     <button id="navGarden">GARDEN</button>
     <button id="navMinigames">MINIGAMES</button>
     <button id="navTrade">FUSE</button>
@@ -536,6 +557,12 @@
       </div>
     </div>
   </div>
+</div>
+
+<div id="trader" class="hidden">
+  <h2 id="traderTitle"></h2>
+  <p class="trader-note">No gambling — these are the exact cards on offer today. Each can be bought once.</p>
+  <div id="traderSlots"></div>
 </div>
 
 <div id="trade" class="hidden">

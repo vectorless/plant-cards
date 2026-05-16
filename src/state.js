@@ -6,8 +6,18 @@ export const state = {
   pots: [null, null, null],
   watering: { common: 0, uncommon: 0, rare: 0 },
   lastDailyClaim: null,
+  traderDate: null,
+  traderPurchased: [false, false, false],
   view: 'shop',
   opening: null,
+};
+
+export const TRADER_PRICES = {
+  common: 50,
+  uncommon: 100,
+  rare: 250,
+  legendary: 750,
+  secret: 1500,
 };
 
 export const DAILY_BONUS = 200;
