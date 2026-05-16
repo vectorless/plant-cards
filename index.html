@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plant Cards</title>
+  <style>
+    :root {
+      --c-common: #9aa0a6;
+      --c-uncommon: #6cc36c;
+      --c-rare: #4a9be8;
+      --c-legendary: #e8b048;
+      --c-secret: #d050d8;
+      --bg: #142018;
+      --bg-2: #1d2a22;
+      --ink: #e6eee4;
+      --ink-dim: #8a9c8e;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; background: var(--bg);
+      color: var(--ink); font-family: 'Georgia', serif; }
+    button { font-family: inherit; cursor: pointer; }
+    .hidden { display: none !important; }
+
+    /* Top bar */
+    #topbar { position: sticky; top: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 28px; background: rgba(10,18,12,0.85);
+      border-bottom: 1px solid #2c3a30; backdrop-filter: blur(6px); }
+    #title { font-size: 22px; letter-spacing: 6px; color: #c8e0c0; }
+    #coins { font-size: 22px; letter-spacing: 2px; color: #ffe78a; }
+    #coins .lbl { font-size: 12px; opacity: 0.55; margin-right: 6px; letter-spacing: 3px; }
+    #navBtns button { background: transparent; border: 1px solid #4a5a4c;
+      color: var(--ink); padding: 8px 18px; letter-spacing: 3px; font-size: 13px;
+      margin-left: 8px; border-radius: 2px; }
+    #navBtns button:hover { background: #233028; border-color: #6c8870; }
+    #navBtns button.active { background: #2a3a30; border-color: #8aa890; color: #f0fff0; }
+
+    /* Shop view */
+    #shop { padding: 40px 32px 60px; max-width: 1280px; margin: 0 auto; }
+    .shop-section { font-size: 18px; letter-spacing: 6px; font-weight: normal;
+      margin: 14px 0 6px; padding-bottom: 6px; border-bottom: 1px solid #2c3a30;
+      color: #c8e0c0; }
+    .shop-section:first-child { margin-top: 0; }
+    .shop-note { color: var(--ink-dim); font-size: 13px; margin: 4px 0 18px; font-style: italic; }
+    .pack-grid { display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 22px; margin-bottom: 28px; }
+    .pack { padding: 30px 20px; text-align: center;
+      background: linear-gradient(160deg, var(--bg-2), #0e160f);
+      border: 1px solid #34483a; border-radius: 8px;
+      transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; }
+    .pack:hover { transform: translateY(-4px); }
+    .pack[data-tier="common"]    { border-color: var(--c-common); }
+    .pack[data-tier="uncommon"]  { border-color: var(--c-uncommon); }
+    .pack[data-tier="rare"]      { border-color: var(--c-rare);
+      box-shadow: 0 0 24px rgba(74, 155, 232, 0.15); }
+    .pack[data-tier="elite"] {
+      border-color: var(--c-legendary);
+      background: linear-gradient(160deg, #2a1c08, #1a1208 60%, #20122a);
+      background-size: 200% 200%;
+      animation: secretShimmer 8s ease infinite;
+      box-shadow: 0 0 30px rgba(232, 176, 72, 0.35);
+    }
+    .pack .icon { font-size: 70px; line-height: 1; margin-bottom: 8px; }
+    .pack h2 { margin: 8px 0 4px; font-size: 22px; letter-spacing: 4px; font-weight: normal; }
+    .pack[data-tier="common"]   h2 { color: var(--c-common); }
+    .pack[data-tier="uncommon"] h2 { color: var(--c-uncommon); }
+    .pack[data-tier="rare"]     h2 { color: var(--c-rare); }
+    .pack[data-tier="elite"]    h2 { color: var(--c-legendary); }
+    .pack.water[data-tier="common"]   { border-color: #6cb4d8; }
+    .pack.water[data-tier="uncommon"] { border-color: #4a9be8; }
+    .pack.water[data-tier="rare"]     { border-color: #3a6ad8;
+      box-shadow: 0 0 24px rgba(58, 106, 216, 0.25); }
+    .pack.water[data-tier="common"]   h2 { color: #6cb4d8; }
+    .pack.water[data-tier="uncommon"] h2 { color: #4a9be8; }
+    .pack.water[data-tier="rare"]     h2 { color: #6c9aff; }
+    .water-grid { grid-template-columns: repeat(3, 1fr); }
+    .pack p { color: var(--ink-dim); font-size: 13px; margin: 8px 0 14px; line-height: 1.5; }
+    .pack .price { color: #ffe78a; letter-spacing: 2px; margin-bottom: 14px; }
+    .pack button { background: #1c2620; color: var(--ink); padding: 10px 28px;
+      border: 1px solid #5a7060; letter-spacing: 3px; font-size: 13px; border-radius: 2px; }
+    .pack button:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
+    .pack button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* Card (used in collection + opening) */
+    .card { position: relative; width: 180px; height: 260px;
+      background: linear-gradient(160deg, #1f2c24, #131a16);
+      border: 2px solid var(--c-common); border-radius: 10px;
+      display: flex; flex-direction: column; padding: 8px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+    .card .art { flex: 1; display: flex; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, #283a30 0%, #0c1410 100%);
+      border-radius: 6px; overflow: hidden; }
+    .card .art svg { width: 100%; height: 100%; }
+    .card .name { text-align: center; padding: 6px 4px 2px; font-size: 14px;
+      letter-spacing: 1px; color: #f0f6ec; min-height: 22px; }
+    .card .rarity { text-align: center; font-size: 10px; letter-spacing: 4px;
+      text-transform: uppercase; padding-bottom: 4px; }
+    .card[data-rarity="common"]    { border-color: var(--c-common); }
+    .card[data-rarity="common"]    .rarity { color: var(--c-common); }
+    .card[data-rarity="uncommon"]  { border-color: var(--c-uncommon); }
+    .card[data-rarity="uncommon"]  .rarity { color: var(--c-uncommon); }
+    .card[data-rarity="rare"]      { border-color: var(--c-rare);
+      box-shadow: 0 0 14px rgba(74, 155, 232, 0.3); }
+    .card[data-rarity="rare"]      .rarity { color: var(--c-rare); }
+    .card[data-rarity="legendary"] { border-color: var(--c-legendary);
+      box-shadow: 0 0 22px rgba(232, 176, 72, 0.45); }
+    .card[data-rarity="legendary"] .rarity { color: var(--c-legendary); }
+    .card[data-rarity="secret"] {
+      border-color: var(--c-secret);
+      background: linear-gradient(135deg, #2b1232, #18221c, #0f2230, #1c2412);
+      background-size: 400% 400%;
+      animation: secretShimmer 6s ease infinite;
+      box-shadow: 0 0 30px rgba(208, 80, 216, 0.55);
+    }
+    .card[data-rarity="secret"] .rarity { color: var(--c-secret); }
+    @keyframes secretShimmer {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Garden */
+    #garden { padding: 40px 32px 60px; max-width: 1100px; margin: 0 auto; }
+    #gardenInventory { background: linear-gradient(160deg, var(--bg-2), #0e160f);
+      border: 1px solid #34483a; border-radius: 8px;
+      padding: 18px 22px; margin-bottom: 28px; }
+    #gardenInventory h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: 4px;
+      font-weight: normal; color: #c8e0c0; }
+    #seedInv { display: flex; gap: 14px; flex-wrap: wrap; }
+    .seed-chip { display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border: 1px solid; border-radius: 18px;
+      font-size: 13px; letter-spacing: 2px; }
+    .seed-chip[data-rarity="common"]    { border-color: var(--c-common);    color: var(--c-common); }
+    .seed-chip[data-rarity="uncommon"]  { border-color: var(--c-uncommon);  color: var(--c-uncommon); }
+    .seed-chip[data-rarity="rare"]      { border-color: var(--c-rare);      color: var(--c-rare); }
+    .seed-chip[data-rarity="legendary"] { border-color: var(--c-legendary); color: var(--c-legendary); }
+    .seed-chip[data-rarity="secret"]    { border-color: var(--c-secret);    color: var(--c-secret); }
+    .seed-chip[data-rarity="water-common"]   { border-color: #6cb4d8; color: #6cb4d8; }
+    .seed-chip[data-rarity="water-uncommon"] { border-color: #4a9be8; color: #4a9be8; }
+    .seed-chip[data-rarity="water-rare"]     { border-color: #6c9aff; color: #6c9aff; }
+    .seed-chip .num { color: var(--ink); }
+
+    .water-row { display: flex; flex-wrap: wrap; gap: 6px;
+      justify-content: center; margin-top: 10px; width: 100%; }
+    .water-btn { padding: 6px 10px; font-size: 11px; letter-spacing: 1px;
+      background: #0a1a28; color: #8acce0; border: 1px solid #4a7090;
+      border-radius: 4px; cursor: pointer; font-family: inherit; }
+    .water-btn[data-tier="rare"]     { color: #a8c0ff; border-color: #6c80c8; }
+    .water-btn[data-tier="uncommon"] { color: #6cb8e8; border-color: #4a8ec0; }
+    .water-btn:hover { background: #16243a; color: #c8e0f4; }
+    .water-btn .n { color: #ffe78a; font-family: monospace; margin-left: 4px; }
+
+    #pots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .pot { background: linear-gradient(160deg, #1a2218, #0a1208 80%);
+      border: 1px solid #34483a; border-radius: 10px; padding: 22px 18px;
+      text-align: center; min-height: 320px;
+      display: flex; flex-direction: column; align-items: center; }
+    .pot[data-state="empty"]   { border-color: #34483a; }
+    .pot[data-state="growing"] { border-color: #5a7060; }
+    .pot[data-state="ready"]   { border-color: #d6b048; box-shadow: 0 0 24px rgba(232, 176, 72, 0.25); }
+    .pot .label { font-size: 11px; letter-spacing: 4px; opacity: 0.55; margin-bottom: 6px; }
+    .pot .icon { font-size: 80px; line-height: 1; margin: 14px 0; }
+    .pot[data-state="ready"] .icon { animation: readyBob 1.2s ease infinite; }
+    @keyframes readyBob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+    .pot .rarity-tag { font-size: 11px; letter-spacing: 3px; margin-top: 4px;
+      text-transform: uppercase; }
+    .pot[data-rarity="common"]    .rarity-tag { color: var(--c-common); }
+    .pot[data-rarity="uncommon"]  .rarity-tag { color: var(--c-uncommon); }
+    .pot[data-rarity="rare"]      .rarity-tag { color: var(--c-rare); }
+    .pot[data-rarity="legendary"] .rarity-tag { color: var(--c-legendary); }
+    .pot[data-rarity="secret"]    .rarity-tag { color: var(--c-secret); }
+    .pot .timer { font-family: monospace; font-size: 14px; color: #ffe78a;
+      margin-top: 6px; letter-spacing: 1px; }
+    .progress { width: 100%; height: 8px; background: #0a1208;
+      border-radius: 4px; margin: 12px 0 6px; overflow: hidden;
+      border: 1px solid #2c3a30; }
+    .progress .bar { height: 100%; transition: width 0.3s linear;
+      background: linear-gradient(90deg, #5cb85c, #8acc8a); }
+    .pot .plant-menu { display: flex; flex-direction: column; gap: 6px; width: 100%;
+      margin-top: 10px; }
+    .pot .plant-menu button { padding: 8px 10px; font-size: 12px; letter-spacing: 2px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 2px; }
+    .pot .plant-menu button:hover:not(:disabled) {
+      background: #2e3e34; border-color: #8aa890; }
+    .pot .plant-menu button:disabled { opacity: 0.3; cursor: not-allowed; }
+    .pot .plant-menu button[data-rarity="common"]:not(:disabled)    { color: var(--c-common); }
+    .pot .plant-menu button[data-rarity="uncommon"]:not(:disabled)  { color: var(--c-uncommon); }
+    .pot .plant-menu button[data-rarity="rare"]:not(:disabled)      { color: var(--c-rare); }
+    .pot .plant-menu button[data-rarity="legendary"]:not(:disabled) { color: var(--c-legendary); }
+    .pot .plant-menu button[data-rarity="secret"]:not(:disabled)    { color: var(--c-secret); }
+    .pot .harvest-btn { margin-top: 12px; padding: 10px 24px; font-size: 13px;
+      letter-spacing: 3px; background: #2a200c; color: #ffe78a;
+      border: 1px solid #d6b048; border-radius: 2px; cursor: pointer; }
+    .pot .harvest-btn:hover { background: #3a2c0c; color: #fff8d0; }
+
+    /* Minigames hub */
+    #minigames { padding: 40px 32px 60px; max-width: 1100px; margin: 0 auto; }
+    #mgHub { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+    .mg-pick { padding: 36px 24px; text-align: center;
+      background: linear-gradient(160deg, var(--bg-2), #0e160f);
+      border: 1px solid #4a5a4c; border-radius: 8px;
+      transition: transform 0.15s, border-color 0.15s; }
+    .mg-pick:hover { transform: translateY(-4px); border-color: #8aa890; }
+    .mg-pick .icon { font-size: 60px; line-height: 1; margin-bottom: 10px; }
+    .mg-pick h2 { margin: 8px 0 6px; font-size: 22px; letter-spacing: 4px;
+      font-weight: normal; color: #c8e0c0; }
+    .mg-pick p { color: var(--ink-dim); font-size: 13px; margin: 6px 0; line-height: 1.5; }
+    .mg-pick p.reward { color: #ffe78a; margin: 10px 0 16px; font-size: 12px;
+      letter-spacing: 2px; }
+    .mg-pick button { background: #1c2620; color: var(--ink); padding: 10px 32px;
+      border: 1px solid #5a7060; letter-spacing: 4px; font-size: 13px;
+      border-radius: 2px; }
+    .mg-pick button:hover { background: #2e3e34; border-color: #8aa890; }
+
+    /* Minigame play area */
+    #mgPlay { position: relative; }
+    #mgHUD { display: flex; align-items: center; gap: 20px;
+      padding: 10px 16px; background: #0e160f; border: 1px solid #2c3a30;
+      border-radius: 6px; margin-bottom: 14px; font-family: monospace; letter-spacing: 2px; }
+    #mgHUD #mgTitle { font-weight: bold; color: #c8e0c0; flex: 1; }
+    #mgHUD #mgTimer { color: #ffe78a; }
+    #mgHUD #mgScore { color: #8acc8a; }
+    #mgHUD button { margin-left: auto; padding: 6px 14px; font-size: 11px;
+      background: transparent; color: #c8a8a8; border: 1px solid #6a4040;
+      letter-spacing: 2px; border-radius: 2px; }
+    #mgHUD button:hover { background: #2a1414; color: #f0c0c0; }
+
+    #mgArena { position: relative; width: 100%; height: 480px;
+      background: radial-gradient(ellipse at center, #1a2820 0%, #0a1410 100%);
+      border: 1px solid #2c3a30; border-radius: 8px; overflow: hidden;
+      cursor: crosshair; }
+
+    /* Catch-the-ball */
+    .mg-ball { position: absolute; width: 36px; height: 36px; border-radius: 50%;
+      cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+      transition: transform 0.08s, opacity 0.15s; user-select: none; }
+    .mg-ball:hover { transform: scale(1.15); }
+    .mg-ball.popped { transform: scale(2); opacity: 0;
+      pointer-events: none; transition: transform 0.25s, opacity 0.25s; }
+
+    /* Timing bar */
+    #mgBar { position: absolute; left: 8%; right: 8%; top: 50%;
+      transform: translateY(-50%); height: 60px;
+      background: linear-gradient(to right,
+        #5a2a2a 0%, #5a2a2a 40%,
+        #5a4a2a 40%, #5a4a2a 45%,
+        #2a5a2a 45%, #2a5a2a 55%,
+        #5a4a2a 55%, #5a4a2a 60%,
+        #5a2a2a 60%, #5a2a2a 100%);
+      border: 2px solid #2c3a30; border-radius: 6px; }
+    #mgBar .zone-label { position: absolute; bottom: -22px; font-size: 11px;
+      letter-spacing: 2px; opacity: 0.7; transform: translateX(-50%); }
+    #mgMarker { position: absolute; top: -4px; bottom: -4px; width: 6px;
+      background: #f0f0f0; box-shadow: 0 0 12px #fff; border-radius: 3px;
+      pointer-events: none; }
+    #mgBarHint { position: absolute; top: 30%; left: 0; right: 0;
+      text-align: center; color: var(--ink-dim); letter-spacing: 3px;
+      font-size: 13px; }
+
+    /* Result overlay */
+    #mgResult { position: absolute; inset: 60px 0 0 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: rgba(5,10,7,0.85); border-radius: 8px; }
+    #mgResult h2 { font-size: 32px; letter-spacing: 6px; color: #ffe78a;
+      margin: 0 0 10px; font-weight: normal; }
+    #mgResult p { color: var(--ink); font-size: 16px; margin: 4px 0; }
+    .mg-result-btns { margin-top: 20px; display: flex; gap: 14px; }
+    .mg-result-btns button { padding: 10px 28px; font-size: 13px; letter-spacing: 3px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 2px; }
+    .mg-result-btns button:hover { background: #2e3e34; border-color: #8aa890; }
+
+    /* Collection grid */
+    #collection { padding: 30px 40px 60px; max-width: 1200px; margin: 0 auto; }
+    #collection h2 { font-size: 18px; letter-spacing: 6px; font-weight: normal;
+      margin: 28px 0 14px; padding-bottom: 6px; border-bottom: 1px solid #2c3a30; }
+    .group[data-rarity="common"]    h2 { color: var(--c-common); }
+    .group[data-rarity="uncommon"]  h2 { color: var(--c-uncommon); }
+    .group[data-rarity="rare"]      h2 { color: var(--c-rare); }
+    .group[data-rarity="legendary"] h2 { color: var(--c-legendary); }
+    .group[data-rarity="secret"]    h2 { color: var(--c-secret); }
+    .row { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px; }
+    .row .card { width: 100%; height: 240px; }
+    .card.unowned .art { filter: grayscale(1) brightness(0.4) contrast(0.6); }
+    .card.unowned .name { color: #4a5a4c; }
+    .card.unowned .rarity { color: #4a5a4c !important; }
+    .card .count { position: absolute; top: 6px; right: 6px;
+      background: rgba(0,0,0,0.7); color: #ffe78a; font-size: 11px;
+      padding: 2px 8px; border-radius: 10px; letter-spacing: 1px;
+      border: 1px solid #4a4030; font-family: monospace; }
+
+    /* Opening overlay */
+    #opening { position: fixed; inset: 0; z-index: 100;
+      background: rgba(5, 10, 7, 0.92);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 30px; }
+    #openingCards { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center;
+      perspective: 1000px; }
+    #openingHint { margin-top: 28px; font-size: 13px; letter-spacing: 4px;
+      color: var(--ink-dim); }
+    #continueBtn { margin-top: 24px; padding: 12px 36px; font-size: 14px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      letter-spacing: 4px; border-radius: 2px; }
+    #continueBtn:hover { background: #2e3e34; border-color: #8aa890; }
+
+    .flipper { width: 180px; height: 260px; position: relative;
+      transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer; }
+    .flipper.flipped { transform: rotateY(180deg); }
+    .flipper .face { position: absolute; inset: 0; backface-visibility: hidden;
+      -webkit-backface-visibility: hidden; }
+    .flipper .back {
+      background: linear-gradient(135deg, #2a3a2e, #142018);
+      border: 2px solid #5a7060; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px; color: #4a6050;
+    }
+    .flipper .front { transform: rotateY(180deg); }
+    .new-ribbon { position: absolute; top: 12px; left: -6px;
+      background: #d6433a; color: #fff; font-size: 10px; letter-spacing: 2px;
+      padding: 3px 10px; transform: rotate(-12deg); z-index: 2;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.5); border-radius: 2px; }
+  </style>
+</head>
+<body>
+
+<div id="topbar">
+  <div id="title">PLANT CARDS</div>
+  <div id="coins"><span class="lbl">COINS</span><span id="coinAmount">0</span></div>
+  <div id="navBtns">
+    <button id="navShop" class="active">SHOP</button>
+    <button id="navGarden">GARDEN</button>
+    <button id="navMinigames">MINIGAMES</button>
+    <button id="navCollection">COLLECTION</button>
+  </div>
+</div>
+
+<div id="shop">
+  <h3 class="shop-section">CARD PACKS</h3>
+  <div class="pack-grid">
+    <div class="pack" data-tier="common">
+      <div class="icon">🌱</div>
+      <h2>COMMON</h2>
+      <p>5 cards. Mostly commons with a chance of uncommons.</p>
+      <div class="price">50 coins</div>
+      <button data-buy-card="common">OPEN</button>
+    </div>
+    <div class="pack" data-tier="uncommon">
+      <div class="icon">🌿</div>
+      <h2>UNCOMMON</h2>
+      <p>5 cards. Guaranteed uncommon. Slim chance of rare.</p>
+      <div class="price">100 coins</div>
+      <button data-buy-card="uncommon">OPEN</button>
+    </div>
+    <div class="pack" data-tier="rare">
+      <div class="icon">🌺</div>
+      <h2>RARE</h2>
+      <p>5 cards. Guaranteed rare. Whispers of legendary &amp; secret.</p>
+      <div class="price">250 coins</div>
+      <button data-buy-card="rare">OPEN</button>
+    </div>
+    <div class="pack" data-tier="elite">
+      <div class="icon">✨</div>
+      <h2>ELITE</h2>
+      <p>1 card. Always legendary &mdash; with a small chance of secret.</p>
+      <div class="price">500 coins</div>
+      <button data-buy-card="elite">OPEN</button>
+    </div>
+  </div>
+
+  <h3 class="shop-section">SEED PACKS</h3>
+  <p class="shop-note">Plant seeds in your garden &mdash; they grow into plant cards over time.</p>
+  <div class="pack-grid">
+    <div class="pack seed" data-tier="common">
+      <div class="icon">🥜</div>
+      <h2>COMMON</h2>
+      <p>3 seeds. Mostly common with a chance of uncommon.</p>
+      <div class="price">40 coins</div>
+      <button data-buy-seed="common">BUY</button>
+    </div>
+    <div class="pack seed" data-tier="uncommon">
+      <div class="icon">🌰</div>
+      <h2>UNCOMMON</h2>
+      <p>3 seeds. Guaranteed uncommon. Slim chance of rare.</p>
+      <div class="price">80 coins</div>
+      <button data-buy-seed="uncommon">BUY</button>
+    </div>
+    <div class="pack seed" data-tier="rare">
+      <div class="icon">🍂</div>
+      <h2>RARE</h2>
+      <p>3 seeds. Guaranteed rare. Whispers of legendary &amp; secret.</p>
+      <div class="price">200 coins</div>
+      <button data-buy-seed="rare">BUY</button>
+    </div>
+    <div class="pack seed" data-tier="elite">
+      <div class="icon">💎</div>
+      <h2>ELITE</h2>
+      <p>1 seed. Always legendary &mdash; small chance of secret.</p>
+      <div class="price">450 coins</div>
+      <button data-buy-seed="elite">BUY</button>
+    </div>
+  </div>
+
+  <h3 class="shop-section">WATERING CAN PACKS</h3>
+  <p class="shop-note">3 cans per pack. Use cans in the garden to speed up growth &mdash; common −30s, uncommon −2m, rare −5m.</p>
+  <div class="pack-grid water-grid">
+    <div class="pack water" data-tier="common">
+      <div class="icon">💧</div>
+      <h2>COMMON</h2>
+      <p>3 cans. Mostly common with a chance of uncommon.</p>
+      <div class="price">450 coins</div>
+      <button data-buy-water-pack="common">OPEN</button>
+    </div>
+    <div class="pack water" data-tier="uncommon">
+      <div class="icon">🚰</div>
+      <h2>UNCOMMON</h2>
+      <p>3 cans. Guaranteed uncommon. Slim chance of rare.</p>
+      <div class="price">1100 coins</div>
+      <button data-buy-water-pack="uncommon">OPEN</button>
+    </div>
+    <div class="pack water" data-tier="rare">
+      <div class="icon">⛲</div>
+      <h2>RARE</h2>
+      <p>3 cans. Guaranteed rare. Up to a flood of them.</p>
+      <div class="price">2400 coins</div>
+      <button data-buy-water-pack="rare">OPEN</button>
+    </div>
+  </div>
+</div>
+
+<div id="garden" class="hidden">
+  <div id="gardenInventory">
+    <h3>SEED INVENTORY</h3>
+    <div id="seedInv"></div>
+  </div>
+  <div id="pots"></div>
+</div>
+
+<div id="minigames" class="hidden">
+  <div id="mgHub">
+    <div class="mg-pick" data-game="balls">
+      <div class="icon">🟢</div>
+      <h2>CATCH THE BALL</h2>
+      <p>10 balls appear. You have 20 seconds. Click every ball you can.</p>
+      <p class="reward">+5 coins per ball &middot; +50 max</p>
+      <button data-game="balls">PLAY</button>
+    </div>
+    <div class="mg-pick" data-game="bar">
+      <div class="icon">🎯</div>
+      <h2>TIMING BAR</h2>
+      <p>Click when the marker hits the center. Bullseye for max coins.</p>
+      <p class="reward">+10 / +25 / +50 coins by accuracy</p>
+      <button data-game="bar">PLAY</button>
+    </div>
+  </div>
+
+  <div id="mgPlay" class="hidden">
+    <div id="mgHUD">
+      <span id="mgTitle">—</span>
+      <span id="mgTimer"></span>
+      <span id="mgScore"></span>
+      <button id="mgQuit">QUIT</button>
+    </div>
+    <div id="mgArena"></div>
+    <div id="mgResult" class="hidden">
+      <h2 id="mgResultTitle">Done</h2>
+      <p id="mgResultLine"></p>
+      <div class="mg-result-btns">
+        <button id="mgPlayAgain">PLAY AGAIN</button>
+        <button id="mgBackHub">BACK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="collection" class="hidden"></div>
+
+<div id="opening" class="hidden">
+  <div id="openingCards"></div>
+  <div id="openingHint">Click cards to reveal</div>
+  <button id="continueBtn" class="hidden">CONTINUE</button>
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
