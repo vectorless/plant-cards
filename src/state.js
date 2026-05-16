@@ -89,7 +89,7 @@ export const TRADE_NEXT_RARITY = {
   legendary: 'secret',
 };
 
-export const TRADE_COST = 3;
+export const TRADE_COST = 5;
 
 export function addSeed(rarity) {
   state.seeds[rarity] = (state.seeds[rarity] ?? 0) + 1;

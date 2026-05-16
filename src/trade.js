@@ -55,7 +55,7 @@ function render() {
   }
 
   const total = totalSelected();
-  els.summary.innerHTML = `Pick <span class="sel">3</span> ${activeFrom} cards to fuse into <span class="sel">1 random ${TRADE_NEXT_RARITY[activeFrom]}</span>.  Selected: <span class="sel">${total}/${TRADE_COST}</span>`;
+  els.summary.innerHTML = `Pick <span class="sel">${TRADE_COST}</span> ${activeFrom} cards to fuse into <span class="sel">1 random ${TRADE_NEXT_RARITY[activeFrom]}</span>.  Selected: <span class="sel">${total}/${TRADE_COST}</span>`;
 
   els.fuseBtn.disabled = total !== TRADE_COST;
   els.fuseBtn.textContent = `FUSE → 1 ${TRADE_NEXT_RARITY[activeFrom].toUpperCase()}`;
