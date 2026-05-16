@@ -6,6 +6,7 @@ import { openPack, openSeedPack, openWateringPack,
          PACK_PRICES, SEED_PACK_PRICES, WATERING_PACK_PRICES } from './pack.js';
 import { initMinigames, showHub } from './minigames.js';
 import { initGarden, showGarden, hideGarden, refreshGarden } from './garden.js';
+import { initTrade, showTrade } from './trade.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -31,6 +32,7 @@ export function initUI() {
     collection: $('collection'),
     minigames: $('minigames'),
     garden: $('garden'),
+    trade: $('trade'),
     opening: $('opening'),
     openingCards: $('openingCards'),
     openingHint: $('openingHint'),
@@ -39,16 +41,19 @@ export function initUI() {
     navCollection: $('navCollection'),
     navMinigames: $('navMinigames'),
     navGarden: $('navGarden'),
+    navTrade: $('navTrade'),
   };
 
   els.navShop.addEventListener('click', () => switchView('shop'));
   els.navCollection.addEventListener('click', () => switchView('collection'));
   els.navMinigames.addEventListener('click', () => switchView('minigames'));
   els.navGarden.addEventListener('click', () => switchView('garden'));
+  els.navTrade.addEventListener('click', () => switchView('trade'));
   els.continueBtn.addEventListener('click', closeOpening);
 
   initMinigames(refreshCoins);
   initGarden();
+  initTrade();
 
   document.querySelectorAll('[data-buy-card]').forEach(btn => {
     btn.addEventListener('click', () => tryBuyCardPack(btn.dataset.buyCard));
@@ -102,13 +107,16 @@ function switchView(view) {
   els.collection.classList.toggle('hidden', view !== 'collection');
   els.minigames.classList.toggle('hidden', view !== 'minigames');
   els.garden.classList.toggle('hidden', view !== 'garden');
+  els.trade.classList.toggle('hidden', view !== 'trade');
   els.navShop.classList.toggle('active', view === 'shop');
   els.navCollection.classList.toggle('active', view === 'collection');
   els.navMinigames.classList.toggle('active', view === 'minigames');
   els.navGarden.classList.toggle('active', view === 'garden');
+  els.navTrade.classList.toggle('active', view === 'trade');
   if (view === 'collection') renderCollection();
   if (view === 'minigames') showHub();
   if (view === 'garden') showGarden();
+  if (view === 'trade') showTrade();
   if (prev === 'garden' && view !== 'garden') hideGarden();
 }
 

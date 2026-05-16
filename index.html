@@ -275,6 +275,64 @@
       border-radius: 2px; }
     .mg-result-btns button:hover { background: #2e3e34; border-color: #8aa890; }
 
+    /* Trade view */
+    #trade { padding: 40px 32px 100px; max-width: 1200px; margin: 0 auto; }
+    #tradeHeader { text-align: center; }
+    #tradeHeader h2 { font-size: 16px; letter-spacing: 6px; font-weight: normal;
+      color: #c8e0c0; margin: 0 0 22px; }
+    #tradeTiers { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .tier-pill { padding: 10px 18px; font-size: 13px; letter-spacing: 3px;
+      background: #0e160f; color: var(--ink-dim); border: 1px solid #2c3a30;
+      border-radius: 4px; cursor: pointer; font-family: inherit;
+      transition: border-color 0.15s, color 0.15s; }
+    .tier-pill:hover:not(:disabled) { border-color: #5a7060; color: var(--ink); }
+    .tier-pill:disabled { opacity: 0.3; cursor: not-allowed; }
+    .tier-pill.active { color: var(--ink); }
+    .tier-pill[data-from="common"].active    { border-color: var(--c-common);    box-shadow: 0 0 12px rgba(154,160,166,0.2); }
+    .tier-pill[data-from="uncommon"].active  { border-color: var(--c-uncommon);  box-shadow: 0 0 14px rgba(108,195,108,0.3); }
+    .tier-pill[data-from="rare"].active      { border-color: var(--c-rare);      box-shadow: 0 0 16px rgba(74,155,232,0.3); }
+    .tier-pill[data-from="legendary"].active { border-color: var(--c-legendary); box-shadow: 0 0 18px rgba(232,176,72,0.35); }
+
+    #tradeSummary { text-align: center; margin: 24px 0 18px;
+      font-size: 14px; letter-spacing: 2px; color: var(--ink-dim); }
+    #tradeSummary .sel { color: #ffe78a; font-family: monospace; }
+
+    #tradeGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 18px; }
+    .trade-cell { position: relative; cursor: pointer;
+      transition: transform 0.12s, filter 0.12s; }
+    .trade-cell:hover { transform: translateY(-3px); }
+    .trade-cell.exhausted { filter: grayscale(0.7) brightness(0.55); cursor: default; }
+    .trade-cell.exhausted:hover { transform: none; }
+    .trade-cell .selN { position: absolute; top: 8px; left: 8px;
+      background: rgba(255, 231, 138, 0.95); color: #1a1208;
+      font-weight: bold; font-family: monospace; font-size: 13px;
+      padding: 2px 10px; border-radius: 12px; letter-spacing: 1px;
+      box-shadow: 0 0 8px rgba(255, 231, 138, 0.4); }
+    .trade-cell.has-selection .card { outline: 2px solid #ffe78a;
+      outline-offset: 2px; }
+    .trade-stepper { position: absolute; bottom: 6px; left: 50%;
+      transform: translateX(-50%); display: flex; gap: 4px; z-index: 2; }
+    .trade-stepper button { width: 26px; height: 26px; padding: 0;
+      background: rgba(10,18,12,0.85); color: var(--ink);
+      border: 1px solid #5a7060; border-radius: 4px; cursor: pointer;
+      font-family: inherit; font-size: 14px; line-height: 1; }
+    .trade-stepper button:hover:not(:disabled) { background: #2e3e34; }
+    .trade-stepper button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #tradeFooter { position: sticky; bottom: 12px; display: flex; justify-content: center;
+      margin-top: 30px; }
+    #tradeFuseBtn { padding: 14px 50px; font-size: 16px; letter-spacing: 6px;
+      background: #2a200c; color: #ffe78a; border: 1px solid #d6b048;
+      border-radius: 3px; cursor: pointer; font-family: inherit;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+    #tradeFuseBtn:hover:not(:disabled) { background: #3a2c0c; color: #fff8d0;
+      box-shadow: 0 0 24px rgba(232,176,72,0.5); }
+    #tradeFuseBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .trade-empty { text-align: center; padding: 50px 30px; color: var(--ink-dim);
+      font-style: italic; font-size: 14px; line-height: 1.6; }
+
     /* Collection grid */
     #collection { padding: 30px 40px 60px; max-width: 1200px; margin: 0 auto; }
     #collection h2 { font-size: 18px; letter-spacing: 6px; font-weight: normal;
@@ -337,6 +395,7 @@
     <button id="navShop" class="active">SHOP</button>
     <button id="navGarden">GARDEN</button>
     <button id="navMinigames">MINIGAMES</button>
+    <button id="navTrade">TRADE</button>
     <button id="navCollection">COLLECTION</button>
   </div>
 </div>
@@ -476,6 +535,18 @@
         <button id="mgBackHub">BACK</button>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="trade" class="hidden">
+  <div id="tradeHeader">
+    <h2>FUSE 3 CARDS &middot; GET 1 OF THE NEXT TIER</h2>
+    <div id="tradeTiers"></div>
+  </div>
+  <div id="tradeSummary"></div>
+  <div id="tradeGrid"></div>
+  <div id="tradeFooter">
+    <button id="tradeFuseBtn" disabled>FUSE</button>
   </div>
 </div>
 

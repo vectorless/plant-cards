@@ -55,6 +55,23 @@ export function cardCount(plantId) {
   return state.collection[plantId] ?? 0;
 }
 
+export function removeCard(plantId, n = 1) {
+  const have = state.collection[plantId] ?? 0;
+  if (have < n) return false;
+  if (have === n) delete state.collection[plantId];
+  else state.collection[plantId] = have - n;
+  return true;
+}
+
+export const TRADE_NEXT_RARITY = {
+  common: 'uncommon',
+  uncommon: 'rare',
+  rare: 'legendary',
+  legendary: 'secret',
+};
+
+export const TRADE_COST = 3;
+
 export function addSeed(rarity) {
   state.seeds[rarity] = (state.seeds[rarity] ?? 0) + 1;
 }
