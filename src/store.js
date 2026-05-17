@@ -21,6 +21,7 @@ export function loadState() {
     state.traderPurchased = Array.isArray(data.traderPurchased) && data.traderPurchased.length === 3
       ? data.traderPurchased.map(Boolean) : [false, false, false];
     state.market = mergeMarket(data.market);
+    state.autoOpen = !!data.autoOpen;
   } catch (e) {
     resetDefaults();
   }
@@ -37,6 +38,7 @@ function resetDefaults() {
   state.traderDate = null;
   state.traderPurchased = [false, false, false];
   state.market = { listings: [], earnings: 0, lastBotTick: 0 };
+  state.autoOpen = false;
 }
 
 function mergeMarket(m) {
@@ -93,6 +95,7 @@ export function saveState() {
     traderDate: state.traderDate,
     traderPurchased: state.traderPurchased,
     market: state.market,
+    autoOpen: state.autoOpen,
   };
   localStorage.setItem(KEY, JSON.stringify(data));
 }

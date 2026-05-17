@@ -9,6 +9,7 @@ export const state = {
   traderDate: null,
   traderPurchased: [false, false, false],
   market: { listings: [], earnings: 0, lastBotTick: 0 },
+  autoOpen: false,
   view: 'shop',
   opening: null,
 };

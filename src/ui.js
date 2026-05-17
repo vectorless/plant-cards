@@ -51,6 +51,8 @@ export function initUI() {
     navTrader: $('navTrader'),
     navSell: $('navSell'),
     navMarket: $('navMarket'),
+    autoOpenToggle: $('autoOpenToggle'),
+    autoOpenLabel: $('autoOpenLabel'),
   };
 
   els.navShop.addEventListener('click', () => switchView('shop'));
@@ -71,13 +73,24 @@ export function initUI() {
   initMarket(refreshCoins);
 
   document.querySelectorAll('[data-buy-card]').forEach(btn => {
-    btn.addEventListener('click', () => tryBuyCardPack(btn.dataset.buyCard));
+    btn.addEventListener('click', () =>
+      tryBuyCardPack(btn.dataset.buyCard, parseInt(btn.dataset.count, 10) || 1));
   });
   document.querySelectorAll('[data-buy-seed]').forEach(btn => {
-    btn.addEventListener('click', () => tryBuySeedPack(btn.dataset.buySeed));
+    btn.addEventListener('click', () =>
+      tryBuySeedPack(btn.dataset.buySeed, parseInt(btn.dataset.count, 10) || 1));
   });
   document.querySelectorAll('[data-buy-water-pack]').forEach(btn => {
-    btn.addEventListener('click', () => tryBuyWateringPack(btn.dataset.buyWaterPack));
+    btn.addEventListener('click', () =>
+      tryBuyWateringPack(btn.dataset.buyWaterPack, parseInt(btn.dataset.count, 10) || 1));
+  });
+
+  els.autoOpenToggle.checked = !!state.autoOpen;
+  els.autoOpenLabel.classList.toggle('active', !!state.autoOpen);
+  els.autoOpenToggle.addEventListener('change', () => {
+    state.autoOpen = els.autoOpenToggle.checked;
+    els.autoOpenLabel.classList.toggle('active', state.autoOpen);
+    saveState();
   });
 
   refreshCoins();
@@ -91,27 +104,32 @@ export function refreshCoins() {
 
 function refreshShopButtons() {
   document.querySelectorAll('[data-buy-card]').forEach(btn => {
-    btn.disabled = state.coins < PACK_PRICES[btn.dataset.buyCard];
+    const n = parseInt(btn.dataset.count, 10) || 1;
+    btn.disabled = state.coins < PACK_PRICES[btn.dataset.buyCard] * n;
   });
   document.querySelectorAll('[data-buy-seed]').forEach(btn => {
-    btn.disabled = state.coins < SEED_PACK_PRICES[btn.dataset.buySeed];
+    const n = parseInt(btn.dataset.count, 10) || 1;
+    btn.disabled = state.coins < SEED_PACK_PRICES[btn.dataset.buySeed] * n;
   });
   document.querySelectorAll('[data-buy-water-pack]').forEach(btn => {
-    btn.disabled = state.coins < WATERING_PACK_PRICES[btn.dataset.buyWaterPack];
+    const n = parseInt(btn.dataset.count, 10) || 1;
+    btn.disabled = state.coins < WATERING_PACK_PRICES[btn.dataset.buyWaterPack] * n;
   });
 }
 
-function tryBuyWateringPack(tier) {
-  const price = WATERING_PACK_PRICES[tier];
+function tryBuyWateringPack(tier, n = 1) {
+  const price = WATERING_PACK_PRICES[tier] * n;
   if (state.coins < price) return;
   state.coins -= price;
   saveState();
   refreshCoins();
 
-  const cans = openWateringPack(tier);
+  const cans = [];
+  for (let i = 0; i < n; i++) cans.push(...openWateringPack(tier));
   state.opening = { kind: 'water', tier, cards: cans, revealed: 0 };
   state.view = 'opening';
   renderOpening();
+  if (state.autoOpen) revealAll();
 }
 
 function switchView(view) {
@@ -168,30 +186,34 @@ function renderCollection() {
   }
 }
 
-function tryBuyCardPack(tier) {
-  const price = PACK_PRICES[tier];
+function tryBuyCardPack(tier, n = 1) {
+  const price = PACK_PRICES[tier] * n;
   if (state.coins < price) return;
   state.coins -= price;
   saveState();
   refreshCoins();
 
-  const cards = openPack(tier);
+  const cards = [];
+  for (let i = 0; i < n; i++) cards.push(...openPack(tier));
   state.opening = { kind: 'card', tier, cards, revealed: 0, newlyOwned: [] };
   state.view = 'opening';
   renderOpening();
+  if (state.autoOpen) revealAll();
 }
 
-function tryBuySeedPack(tier) {
-  const price = SEED_PACK_PRICES[tier];
+function tryBuySeedPack(tier, n = 1) {
+  const price = SEED_PACK_PRICES[tier] * n;
   if (state.coins < price) return;
   state.coins -= price;
   saveState();
   refreshCoins();
 
-  const seeds = openSeedPack(tier);
+  const seeds = [];
+  for (let i = 0; i < n; i++) seeds.push(...openSeedPack(tier));
   state.opening = { kind: 'seed', tier, cards: seeds, revealed: 0 };
   state.view = 'opening';
   renderOpening();
+  if (state.autoOpen) revealAll();
 }
 
 function renderOpening() {

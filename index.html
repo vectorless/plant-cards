@@ -81,6 +81,17 @@
       border: 1px solid #5a7060; letter-spacing: 3px; font-size: 13px; border-radius: 2px; }
     .pack button:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
     .pack button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .pack .buy-row { display: flex; gap: 6px; justify-content: center; align-items: center; flex-wrap: wrap; }
+    .pack .buy-row button.multi { padding: 10px 14px; font-size: 12px; letter-spacing: 2px; }
+
+    /* Shop top bar with auto-open toggle */
+    .shop-prefs { display: flex; justify-content: flex-end; align-items: center; gap: 12px;
+      max-width: 1200px; margin: 18px auto 0; padding: 0 32px; }
+    .shop-prefs label { display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+      font-size: 12px; letter-spacing: 2px; color: var(--ink-dim); user-select: none; }
+    .shop-prefs label:hover { color: var(--ink); }
+    .shop-prefs input[type="checkbox"] { accent-color: #d6b048; width: 16px; height: 16px; cursor: pointer; }
+    .shop-prefs label.active { color: #ffe78a; }
 
     /* Card (used in collection + opening) */
     .card { position: relative; width: 180px; height: 260px;
@@ -591,6 +602,13 @@
 </div>
 
 <div id="shop">
+  <div class="shop-prefs">
+    <label id="autoOpenLabel">
+      <input type="checkbox" id="autoOpenToggle" />
+      <span>AUTO-OPEN PACKS</span>
+    </label>
+  </div>
+
   <h3 class="shop-section">CARD PACKS</h3>
   <div class="pack-grid">
     <div class="pack" data-tier="common">
@@ -598,28 +616,44 @@
       <h2>COMMON</h2>
       <p>5 cards. Mostly commons with a chance of uncommons.</p>
       <div class="price">50 coins</div>
-      <button data-buy-card="common">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-card="common" data-count="1">OPEN</button>
+        <button data-buy-card="common" data-count="3" class="multi">×3</button>
+        <button data-buy-card="common" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack" data-tier="uncommon">
       <div class="icon">🌿</div>
       <h2>UNCOMMON</h2>
       <p>5 cards. Guaranteed uncommon. Slim chance of rare.</p>
       <div class="price">100 coins</div>
-      <button data-buy-card="uncommon">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-card="uncommon" data-count="1">OPEN</button>
+        <button data-buy-card="uncommon" data-count="3" class="multi">×3</button>
+        <button data-buy-card="uncommon" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack" data-tier="rare">
       <div class="icon">🌺</div>
       <h2>RARE</h2>
       <p>5 cards. Guaranteed rare. Whispers of legendary &amp; secret.</p>
       <div class="price">250 coins</div>
-      <button data-buy-card="rare">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-card="rare" data-count="1">OPEN</button>
+        <button data-buy-card="rare" data-count="3" class="multi">×3</button>
+        <button data-buy-card="rare" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack" data-tier="elite">
       <div class="icon">✨</div>
       <h2>ELITE</h2>
       <p>1 card. Always legendary &mdash; with a small chance of secret.</p>
       <div class="price">500 coins</div>
-      <button data-buy-card="elite">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-card="elite" data-count="1">OPEN</button>
+        <button data-buy-card="elite" data-count="3" class="multi">×3</button>
+        <button data-buy-card="elite" data-count="10" class="multi">×10</button>
+      </div>
     </div>
   </div>
 
@@ -631,28 +665,44 @@
       <h2>COMMON</h2>
       <p>3 seeds. Mostly common with a chance of uncommon.</p>
       <div class="price">40 coins</div>
-      <button data-buy-seed="common">BUY</button>
+      <div class="buy-row">
+        <button data-buy-seed="common" data-count="1">BUY</button>
+        <button data-buy-seed="common" data-count="3" class="multi">×3</button>
+        <button data-buy-seed="common" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack seed" data-tier="uncommon">
       <div class="icon">🌰</div>
       <h2>UNCOMMON</h2>
       <p>3 seeds. Guaranteed uncommon. Slim chance of rare.</p>
       <div class="price">80 coins</div>
-      <button data-buy-seed="uncommon">BUY</button>
+      <div class="buy-row">
+        <button data-buy-seed="uncommon" data-count="1">BUY</button>
+        <button data-buy-seed="uncommon" data-count="3" class="multi">×3</button>
+        <button data-buy-seed="uncommon" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack seed" data-tier="rare">
       <div class="icon">🍂</div>
       <h2>RARE</h2>
       <p>3 seeds. Guaranteed rare. Whispers of legendary &amp; secret.</p>
       <div class="price">200 coins</div>
-      <button data-buy-seed="rare">BUY</button>
+      <div class="buy-row">
+        <button data-buy-seed="rare" data-count="1">BUY</button>
+        <button data-buy-seed="rare" data-count="3" class="multi">×3</button>
+        <button data-buy-seed="rare" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack seed" data-tier="elite">
       <div class="icon">💎</div>
       <h2>ELITE</h2>
       <p>1 seed. Always legendary &mdash; small chance of secret.</p>
       <div class="price">450 coins</div>
-      <button data-buy-seed="elite">BUY</button>
+      <div class="buy-row">
+        <button data-buy-seed="elite" data-count="1">BUY</button>
+        <button data-buy-seed="elite" data-count="3" class="multi">×3</button>
+        <button data-buy-seed="elite" data-count="10" class="multi">×10</button>
+      </div>
     </div>
   </div>
 
@@ -664,21 +714,33 @@
       <h2>COMMON</h2>
       <p>3 cans. Mostly common with a chance of uncommon.</p>
       <div class="price">450 coins</div>
-      <button data-buy-water-pack="common">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-water-pack="common" data-count="1">OPEN</button>
+        <button data-buy-water-pack="common" data-count="3" class="multi">×3</button>
+        <button data-buy-water-pack="common" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack water" data-tier="uncommon">
       <div class="icon">🚰</div>
       <h2>UNCOMMON</h2>
       <p>3 cans. Guaranteed uncommon. Slim chance of rare.</p>
       <div class="price">1100 coins</div>
-      <button data-buy-water-pack="uncommon">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-water-pack="uncommon" data-count="1">OPEN</button>
+        <button data-buy-water-pack="uncommon" data-count="3" class="multi">×3</button>
+        <button data-buy-water-pack="uncommon" data-count="10" class="multi">×10</button>
+      </div>
     </div>
     <div class="pack water" data-tier="rare">
       <div class="icon">⛲</div>
       <h2>RARE</h2>
       <p>3 cans. Guaranteed rare. Up to a flood of them.</p>
       <div class="price">2400 coins</div>
-      <button data-buy-water-pack="rare">OPEN</button>
+      <div class="buy-row">
+        <button data-buy-water-pack="rare" data-count="1">OPEN</button>
+        <button data-buy-water-pack="rare" data-count="3" class="multi">×3</button>
+        <button data-buy-water-pack="rare" data-count="10" class="multi">×10</button>
+      </div>
     </div>
   </div>
 </div>
