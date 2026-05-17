@@ -9,6 +9,7 @@ import { initGarden, showGarden, hideGarden, refreshGarden } from './garden.js';
 import { initTrade, showTrade } from './trade.js';
 import { initTrader, showTrader } from './trader.js';
 import { initSell, showSell } from './sell.js';
+import { initMarket, showMarket } from './market.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -37,6 +38,7 @@ export function initUI() {
     trade: $('trade'),
     trader: $('trader'),
     sell: $('sell'),
+    market: $('market'),
     opening: $('opening'),
     openingCards: $('openingCards'),
     openingHint: $('openingHint'),
@@ -48,6 +50,7 @@ export function initUI() {
     navTrade: $('navTrade'),
     navTrader: $('navTrader'),
     navSell: $('navSell'),
+    navMarket: $('navMarket'),
   };
 
   els.navShop.addEventListener('click', () => switchView('shop'));
@@ -57,6 +60,7 @@ export function initUI() {
   els.navTrade.addEventListener('click', () => switchView('trade'));
   els.navTrader.addEventListener('click', () => switchView('trader'));
   els.navSell.addEventListener('click', () => switchView('sell'));
+  els.navMarket.addEventListener('click', () => switchView('market'));
   els.continueBtn.addEventListener('click', closeOpening);
 
   initMinigames(refreshCoins);
@@ -64,6 +68,7 @@ export function initUI() {
   initTrade();
   initTrader(refreshCoins);
   initSell(refreshCoins);
+  initMarket(refreshCoins);
 
   document.querySelectorAll('[data-buy-card]').forEach(btn => {
     btn.addEventListener('click', () => tryBuyCardPack(btn.dataset.buyCard));
@@ -120,6 +125,7 @@ function switchView(view) {
   els.trade.classList.toggle('hidden', view !== 'trade');
   els.trader.classList.toggle('hidden', view !== 'trader');
   els.sell.classList.toggle('hidden', view !== 'sell');
+  els.market.classList.toggle('hidden', view !== 'market');
   els.navShop.classList.toggle('active', view === 'shop');
   els.navCollection.classList.toggle('active', view === 'collection');
   els.navMinigames.classList.toggle('active', view === 'minigames');
@@ -127,12 +133,14 @@ function switchView(view) {
   els.navTrade.classList.toggle('active', view === 'trade');
   els.navTrader.classList.toggle('active', view === 'trader');
   els.navSell.classList.toggle('active', view === 'sell');
+  els.navMarket.classList.toggle('active', view === 'market');
   if (view === 'collection') renderCollection();
   if (view === 'minigames') showHub();
   if (view === 'garden') showGarden();
   if (view === 'trade') showTrade();
   if (view === 'trader') showTrader();
   if (view === 'sell') showSell();
+  if (view === 'market') showMarket();
   if (prev === 'garden' && view !== 'garden') hideGarden();
 }
 

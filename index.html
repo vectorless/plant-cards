@@ -275,6 +275,128 @@
       border-radius: 2px; }
     .mg-result-btns button:hover { background: #2e3e34; border-color: #8aa890; }
 
+    /* Market view */
+    #market { padding: 36px 32px 80px; max-width: 1200px; margin: 0 auto; }
+    .market-title { text-align: center; font-size: 18px; letter-spacing: 8px;
+      font-weight: normal; color: #c8e0c0; margin: 0 0 6px; }
+    .market-note { text-align: center; color: var(--ink-dim);
+      font-style: italic; font-size: 13px; margin: 0 0 22px; }
+
+    #marketTabs { display: flex; gap: 8px; margin-bottom: 18px; align-items: center; }
+    #marketTabs button { padding: 10px 22px; font-size: 13px; letter-spacing: 3px;
+      background: #0e160f; color: var(--ink-dim); border: 1px solid #2c3a30;
+      border-radius: 4px; cursor: pointer; font-family: inherit; }
+    #marketTabs button.active { color: var(--ink); border-color: #6c8870; background: #1c2620; }
+    #marketTabs button:hover { color: var(--ink); }
+    #marketTabs #marketListBtn { margin-left: auto; color: #ffe78a;
+      border-color: #6a5638; background: #2a200c; }
+    #marketTabs #marketListBtn:hover { background: #3a2c0c; color: #fff8d0;
+      border-color: #d6b048; }
+
+    #marketEarnings { display: flex; gap: 14px; align-items: center;
+      justify-content: space-between;
+      padding: 10px 18px; margin-bottom: 18px;
+      background: #0e160f; border: 1px solid #2c3a30; border-radius: 6px;
+      font-size: 13px; letter-spacing: 1px; color: var(--ink-dim); }
+    #marketEarnings.has-earnings { border-color: #d6b048;
+      box-shadow: 0 0 18px rgba(232,176,72,0.18); }
+    #marketEarnings strong { font-family: monospace; color: #ffe78a;
+      font-size: 16px; margin: 0 4px; }
+    #marketEarnings button { padding: 8px 20px; font-size: 12px; letter-spacing: 3px;
+      background: #2a200c; color: #ffe78a; border: 1px solid #6a5638;
+      border-radius: 3px; cursor: pointer; font-family: inherit; }
+    #marketEarnings button:hover:not(:disabled) { background: #3a2c0c; border-color: #d6b048; }
+    #marketEarnings button:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    #marketFilters { display: flex; gap: 14px; align-items: center;
+      margin-bottom: 22px; flex-wrap: wrap; }
+    #marketFilters label { display: flex; align-items: center; gap: 6px;
+      font-size: 12px; letter-spacing: 2px; color: var(--ink-dim); }
+    #marketFilters select, #marketFilters input { padding: 6px 10px; font-size: 13px;
+      background: #0e160f; color: var(--ink); border: 1px solid #34483a;
+      border-radius: 3px; font-family: inherit; }
+    #marketFilters input { min-width: 240px; }
+
+    .market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+      gap: 18px; }
+    .market-cell { display: flex; flex-direction: column; align-items: center;
+      padding: 12px; background: linear-gradient(160deg, #1a2218, #0e160f);
+      border: 1px solid #2c3a30; border-radius: 8px; }
+    .market-cell .card { width: 100%; max-width: 180px; height: 240px; margin-bottom: 10px; }
+    .market-meta { text-align: center; width: 100%; margin-bottom: 8px; }
+    .market-meta .seller { font-size: 11px; color: var(--ink-dim); letter-spacing: 1px;
+      margin-bottom: 4px; font-style: italic; }
+    .market-meta .price { font-size: 16px; color: #ffe78a; letter-spacing: 2px;
+      font-family: 'Georgia', serif; }
+    .market-buy, .market-cancel { padding: 7px 18px; font-size: 11px; letter-spacing: 3px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 3px; cursor: pointer; font-family: inherit; width: 100%; }
+    .market-buy:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
+    .market-buy:disabled { opacity: 0.35; cursor: not-allowed; }
+    .market-cancel { color: #c8a8a8; border-color: #6a4040; }
+    .market-cancel:hover { background: #2a1414; color: #f0c0c0; }
+
+    .market-empty { text-align: center; padding: 50px 30px; color: var(--ink-dim);
+      font-style: italic; font-size: 14px; }
+
+    /* List-a-card modal */
+    #marketModal { position: fixed; inset: 0; z-index: 200;
+      background: rgba(5, 10, 7, 0.92);
+      display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-box { background: #142018; border: 1px solid #5a7060; border-radius: 8px;
+      padding: 22px 26px; max-width: 760px; width: 100%; max-height: 90vh;
+      display: flex; flex-direction: column; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px; }
+    .modal-head h3 { margin: 0; font-size: 14px; letter-spacing: 5px;
+      font-weight: normal; color: #c8e0c0; }
+    .modal-head button { background: transparent; border: none; color: var(--ink);
+      font-size: 24px; cursor: pointer; padding: 0 6px; line-height: 1; }
+    #marketModalGrid { flex: 1; overflow-y: auto; padding: 6px;
+      border: 1px solid #2c3a30; border-radius: 4px; background: #0a1208; }
+    .modal-group { margin-bottom: 14px; }
+    .modal-group h4 { margin: 6px 0 8px; font-size: 11px; letter-spacing: 3px;
+      font-weight: normal; color: var(--ink-dim); }
+    .modal-group h4[data-rarity="common"]    { color: var(--c-common); }
+    .modal-group h4[data-rarity="uncommon"]  { color: var(--c-uncommon); }
+    .modal-group h4[data-rarity="rare"]      { color: var(--c-rare); }
+    .modal-group h4[data-rarity="legendary"] { color: var(--c-legendary); }
+    .modal-group h4[data-rarity="secret"]    { color: var(--c-secret); }
+    .modal-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .modal-card-item { display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; font-size: 12px; letter-spacing: 1px;
+      background: #14201a; color: var(--ink); border: 1px solid #34483a;
+      border-radius: 16px; cursor: pointer; font-family: inherit; }
+    .modal-card-item:hover { border-color: #6c8870; }
+    .modal-card-item.picked { background: #2a200c; border-color: #d6b048; color: #fff8d0; }
+    .modal-card-item .dot { width: 7px; height: 7px; border-radius: 50%; }
+    .modal-card-item[data-rarity="common"]    .dot { background: var(--c-common); }
+    .modal-card-item[data-rarity="uncommon"]  .dot { background: var(--c-uncommon); }
+    .modal-card-item[data-rarity="rare"]      .dot { background: var(--c-rare); }
+    .modal-card-item[data-rarity="legendary"] .dot { background: var(--c-legendary); }
+    .modal-card-item[data-rarity="secret"]    .dot { background: var(--c-secret); }
+    .modal-card-item .ct { color: var(--ink-dim); font-family: monospace; }
+    .modal-footer { margin-top: 14px; }
+    .modal-footer #marketModalPicked { font-size: 13px; color: var(--ink);
+      margin-bottom: 4px; letter-spacing: 1px; }
+    .modal-footer #marketModalSuggest { font-size: 11px; color: #ffe78a;
+      letter-spacing: 2px; margin-bottom: 10px; }
+    .modal-price-row label { display: flex; align-items: center; gap: 10px;
+      font-size: 12px; letter-spacing: 2px; color: var(--ink-dim); }
+    .modal-price-row input { padding: 8px 12px; font-size: 14px;
+      background: #0a1208; color: #ffe78a; border: 1px solid #34483a;
+      border-radius: 3px; font-family: monospace; width: 140px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; margin-top: 14px; }
+    .modal-btns button { padding: 9px 22px; font-size: 12px; letter-spacing: 3px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060;
+      border-radius: 3px; cursor: pointer; font-family: inherit; }
+    .modal-btns button:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
+    .modal-btns #marketModalPost { background: #2a200c; color: #ffe78a;
+      border-color: #6a5638; }
+    .modal-btns #marketModalPost:hover:not(:disabled) { background: #3a2c0c;
+      border-color: #d6b048; }
+    .modal-btns #marketModalPost:disabled { opacity: 0.35; cursor: not-allowed; }
+
     /* Sell view */
     #sell { padding: 40px 32px 60px; max-width: 900px; margin: 0 auto; }
     .sell-title { text-align: center; font-size: 16px; letter-spacing: 6px;
@@ -463,6 +585,7 @@
     <button id="navMinigames">MINIGAMES</button>
     <button id="navTrade">FUSE</button>
     <button id="navSell">SELL</button>
+    <button id="navMarket">MARKET</button>
     <button id="navCollection">COLLECTION</button>
   </div>
 </div>
@@ -620,6 +743,66 @@
   <div id="tradeGrid"></div>
   <div id="tradeFooter">
     <button id="tradeFuseBtn" disabled>FUSE</button>
+  </div>
+</div>
+
+<div id="market" class="hidden">
+  <h2 class="market-title">PLAYER MARKET</h2>
+  <p class="market-note">Buy and sell cards with other players. Set your own price. Listings refresh continuously.</p>
+
+  <div id="marketTabs">
+    <button data-tab="browse" class="active">BROWSE</button>
+    <button data-tab="mine">MY LISTINGS (0)</button>
+    <button id="marketListBtn">+ LIST A CARD</button>
+  </div>
+
+  <div id="marketEarnings">
+    <span>Pending earnings: <strong id="marketEarningsAmt">+0</strong> coins</span>
+    <button id="marketEarningsBtn" disabled>COLLECT</button>
+  </div>
+
+  <div id="marketFilters">
+    <label>Rarity
+      <select id="marketRarity">
+        <option value="all">All</option>
+        <option value="common">Common</option>
+        <option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option>
+        <option value="legendary">Legendary</option>
+        <option value="secret">Secret</option>
+      </select>
+    </label>
+    <label>Sort
+      <select id="marketSort">
+        <option value="price-asc">Price ↑</option>
+        <option value="price-desc">Price ↓</option>
+        <option value="newest">Newest</option>
+      </select>
+    </label>
+    <input id="marketSearch" type="text" placeholder="Search plant or seller…" />
+  </div>
+
+  <div id="marketBody"></div>
+
+  <div id="marketModal" class="hidden">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3>LIST A CARD FOR SALE</h3>
+        <button id="marketModalClose">×</button>
+      </div>
+      <div id="marketModalGrid"></div>
+      <div class="modal-footer">
+        <div id="marketModalPicked">Pick a card from your collection</div>
+        <div id="marketModalSuggest"></div>
+        <div class="modal-price-row">
+          <label>Price <input id="marketModalPrice" type="number" min="1" max="999999" placeholder="coins" /></label>
+        </div>
+        <div class="modal-btns">
+          <button id="marketModalCancel">CANCEL</button>
+          <button id="marketModalPost" disabled>POST LISTING</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 

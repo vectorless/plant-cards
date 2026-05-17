@@ -20,6 +20,7 @@ export function loadState() {
     state.traderDate = typeof data.traderDate === 'string' ? data.traderDate : null;
     state.traderPurchased = Array.isArray(data.traderPurchased) && data.traderPurchased.length === 3
       ? data.traderPurchased.map(Boolean) : [false, false, false];
+    state.market = mergeMarket(data.market);
   } catch (e) {
     resetDefaults();
   }
@@ -35,6 +36,17 @@ function resetDefaults() {
   state.lastDailyClaim = null;
   state.traderDate = null;
   state.traderPurchased = [false, false, false];
+  state.market = { listings: [], earnings: 0, lastBotTick: 0 };
+}
+
+function mergeMarket(m) {
+  const defaults = { listings: [], earnings: 0, lastBotTick: 0 };
+  if (!m || typeof m !== 'object') return defaults;
+  return {
+    listings: Array.isArray(m.listings) ? m.listings : [],
+    earnings: Number.isFinite(m.earnings) ? m.earnings : 0,
+    lastBotTick: Number.isFinite(m.lastBotTick) ? m.lastBotTick : 0,
+  };
 }
 
 function mergeWatering(w) {
@@ -80,6 +92,7 @@ export function saveState() {
     lastDailyClaim: state.lastDailyClaim,
     traderDate: state.traderDate,
     traderPurchased: state.traderPurchased,
+    market: state.market,
   };
   localStorage.setItem(KEY, JSON.stringify(data));
 }
