@@ -542,6 +542,7 @@ export function buildCard(plant, opts = {}) {
   card.dataset.rarity = plant.rarity;
 
   if (opts.unowned) card.classList.add('unowned');
+  if (opts.landscape) card.classList.add('landscape');
 
   const art = document.createElement('div');
   art.className = 'art';
@@ -551,12 +552,21 @@ export function buildCard(plant, opts = {}) {
   const name = document.createElement('div');
   name.className = 'name';
   name.textContent = opts.unowned ? '???' : plant.name;
-  card.appendChild(name);
 
   const rarity = document.createElement('div');
   rarity.className = 'rarity';
   rarity.textContent = plant.rarity;
-  card.appendChild(rarity);
+
+  if (opts.landscape) {
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.appendChild(name);
+    info.appendChild(rarity);
+    card.appendChild(info);
+  } else {
+    card.appendChild(name);
+    card.appendChild(rarity);
+  }
 
   if (opts.count && opts.count > 1) {
     const count = document.createElement('div');

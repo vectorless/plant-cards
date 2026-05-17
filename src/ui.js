@@ -306,6 +306,7 @@ function itemLabel() {
 function buildFlipper(packIdx, cardIdx) {
   const flipper = document.createElement('div');
   flipper.className = 'flipper';
+  if (state.opening.packs.length > 1) flipper.classList.add('landscape');
   flipper.dataset.packIdx = packIdx;
   flipper.dataset.cardIdx = cardIdx;
 
@@ -334,17 +335,18 @@ function revealOne(packIdx, cardIdx, flipper) {
   const front = document.createElement('div');
   front.className = 'face front';
 
+  const landscape = state.opening.packs.length > 1;
   if (state.opening.kind === 'seed') {
     addSeed(item);
-    front.appendChild(buildSeedFace(item));
+    front.appendChild(buildSeedFace(item, landscape));
   } else if (state.opening.kind === 'water') {
     addWatering(item);
-    front.appendChild(buildWaterFace(item));
+    front.appendChild(buildWaterFace(item, landscape));
   } else {
     const plant = plantById(item);
     const isNew = addCard(item);
     if (isNew) state.opening.newlyOwned.push(item);
-    front.appendChild(buildCard(plant, { isNew }));
+    front.appendChild(buildCard(plant, { isNew, landscape }));
   }
   flipper.appendChild(front);
   flipper.classList.add('flipped');
@@ -389,9 +391,9 @@ function finishOpening() {
   els.continueBtn.classList.remove('hidden');
 }
 
-function buildWaterFace(rarity) {
+function buildWaterFace(rarity, landscape = false) {
   const card = document.createElement('div');
-  card.className = 'card water-card';
+  card.className = 'card water-card' + (landscape ? ' landscape' : '');
   card.dataset.rarity = rarity;
   card.style.borderColor = rarity === 'common' ? '#6cb4d8'
                           : rarity === 'uncommon' ? '#4a9be8' : '#6c9aff';
@@ -405,20 +407,29 @@ function buildWaterFace(rarity) {
   const name = document.createElement('div');
   name.className = 'name';
   name.textContent = `WATERING CAN  ${WATER_LABEL[rarity]}`;
-  card.appendChild(name);
 
   const r = document.createElement('div');
   r.className = 'rarity';
   r.style.color = card.style.borderColor;
   r.textContent = rarity;
-  card.appendChild(r);
+
+  if (landscape) {
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.appendChild(name);
+    info.appendChild(r);
+    card.appendChild(info);
+  } else {
+    card.appendChild(name);
+    card.appendChild(r);
+  }
 
   return card;
 }
 
-function buildSeedFace(rarity) {
+function buildSeedFace(rarity, landscape = false) {
   const card = document.createElement('div');
-  card.className = 'card';
+  card.className = 'card' + (landscape ? ' landscape' : '');
   card.dataset.rarity = rarity;
 
   const art = document.createElement('div');
@@ -433,12 +444,21 @@ function buildSeedFace(rarity) {
   const name = document.createElement('div');
   name.className = 'name';
   name.textContent = 'SEED';
-  card.appendChild(name);
 
   const r = document.createElement('div');
   r.className = 'rarity';
   r.textContent = rarity;
-  card.appendChild(r);
+
+  if (landscape) {
+    const info = document.createElement('div');
+    info.className = 'info';
+    info.appendChild(name);
+    info.appendChild(r);
+    card.appendChild(info);
+  } else {
+    card.appendChild(name);
+    card.appendChild(r);
+  }
 
   return card;
 }

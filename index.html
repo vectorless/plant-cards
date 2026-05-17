@@ -107,6 +107,12 @@
       letter-spacing: 1px; color: #f0f6ec; min-height: 22px; }
     .card .rarity { text-align: center; font-size: 10px; letter-spacing: 4px;
       text-transform: uppercase; padding-bottom: 4px; }
+    .card.landscape { width: 260px; height: 180px; flex-direction: row; padding: 8px; }
+    .card.landscape .art { width: 150px; height: 100%; flex: 0 0 auto; }
+    .card.landscape .info { flex: 1; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; padding-left: 6px; min-width: 0; }
+    .card.landscape .name { padding: 0 4px 6px; }
+    .card.landscape .rarity { padding-bottom: 0; }
     .card[data-rarity="common"]    { border-color: var(--c-common); }
     .card[data-rarity="common"]    .rarity { color: var(--c-common); }
     .card[data-rarity="uncommon"]  { border-color: var(--c-uncommon); }
@@ -211,7 +217,7 @@
 
     /* Minigames hub */
     #minigames { padding: 40px 32px 60px; max-width: 1100px; margin: 0 auto; }
-    #mgHub { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px; }
+    #mgHub { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 28px; }
     .mg-pick { padding: 36px 24px; text-align: center;
       background: linear-gradient(160deg, var(--bg-2), #0e160f);
       border: 1px solid #4a5a4c; border-radius: 8px;
@@ -269,6 +275,32 @@
     #mgMarker { position: absolute; top: -4px; bottom: -4px; width: 6px;
       background: #f0f0f0; box-shadow: 0 0 12px #fff; border-radius: 3px;
       pointer-events: none; }
+    /* Plant quiz */
+    #mgQuiz { position: absolute; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 20px; padding: 20px; }
+    #mgQuiz .quiz-display { width: 220px; height: 260px; background: linear-gradient(160deg, #1f2c24, #131a16);
+      border: 2px solid #5a7060; border-radius: 10px; padding: 8px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+    #mgQuiz .quiz-display .art { width: 100%; height: 100%; background: radial-gradient(ellipse at center, #283a30 0%, #0c1410 100%);
+      border-radius: 6px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+    #mgQuiz .quiz-display .art svg { width: 100%; height: 100%; }
+    #mgQuiz .quiz-options { display: grid; grid-template-columns: repeat(2, minmax(180px, 1fr));
+      gap: 10px; width: min(520px, 90%); }
+    #mgQuiz .quiz-options button { padding: 12px 14px; font-size: 13px; letter-spacing: 2px;
+      background: #1c2620; color: var(--ink); border: 1px solid #5a7060; border-radius: 3px;
+      cursor: pointer; font-family: inherit; transition: background 0.15s, border-color 0.15s; }
+    #mgQuiz .quiz-options button:hover:not(:disabled) { background: #2e3e34; border-color: #8aa890; }
+    #mgQuiz .quiz-options button:disabled { cursor: default; opacity: 0.6; }
+    #mgQuiz .quiz-options button.correct { background: #1a3a20; border-color: #40c460; color: #c0f0c0; }
+    #mgQuiz .quiz-options button.wrong { background: #3a1a1a; border-color: #c44040; color: #f0c0c0; }
+
+    /* Reaction test */
+    #mgReaction { position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 36px; letter-spacing: 4px; cursor: pointer;
+      user-select: none; transition: background 0.05s; }
+    #mgReaction.waiting { background: #6a2a2a; color: #f0c0c0; }
+    #mgReaction.ready   { background: #2a6a3a; color: #fff8d0; }
+    #mgReaction.shown   { background: #1c2620; color: #ffe78a; }
+
     #mgBarHint { position: absolute; top: 30%; left: 0; right: 0;
       text-align: center; color: var(--ink-dim); letter-spacing: 3px;
       font-size: 13px; }
@@ -584,6 +616,7 @@
     .flipper { width: 180px; height: 260px; position: relative;
       transform-style: preserve-3d; transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
       cursor: pointer; }
+    .flipper.landscape { width: 260px; height: 180px; }
     .flipper.flipped { transform: rotateY(180deg); }
     .flipper .face { position: absolute; inset: 0; backface-visibility: hidden;
       -webkit-backface-visibility: hidden; }
@@ -784,6 +817,20 @@
       <p>Click when the marker hits the center. Bullseye for max coins.</p>
       <p class="reward">+10 / +25 / +50 coins by accuracy</p>
       <button data-game="bar">PLAY</button>
+    </div>
+    <div class="mg-pick" data-game="quiz">
+      <div class="icon">🌼</div>
+      <h2>PLANT QUIZ</h2>
+      <p>Look at the plant. Pick the right name from four choices. Five rounds.</p>
+      <p class="reward">+15 coins per correct &middot; +75 max</p>
+      <button data-game="quiz">PLAY</button>
+    </div>
+    <div class="mg-pick" data-game="reaction">
+      <div class="icon">⚡</div>
+      <h2>REACTION TEST</h2>
+      <p>Wait for green, then click as fast as you can. Three rounds.</p>
+      <p class="reward">Up to +100 coins by speed</p>
+      <button data-game="reaction">PLAY</button>
     </div>
   </div>
 

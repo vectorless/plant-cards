@@ -1,5 +1,7 @@
 import { state } from './state.js';
 import { saveState } from './store.js';
+import { PLANTS } from './plants.js';
+import { buildPlantSVG } from './svg.js';
 
 const $ = (id) => document.getElementById(id);
 
@@ -69,6 +71,8 @@ function start(type) {
 
   if (type === 'balls') startBalls();
   else if (type === 'bar') startBar();
+  else if (type === 'quiz') startQuiz();
+  else if (type === 'reaction') startReaction();
 }
 
 function endMinigame() {
@@ -345,6 +349,209 @@ function startBar() {
       marker.style.background = '#f0f0f0';
       marker.style.boxShadow = '0 0 12px #fff';
     }, 250);
+  }
+}
+
+// ── Plant Quiz ─────────────────────────────────────────────────────────────
+
+function startQuiz() {
+  els.title.textContent = 'PLANT QUIZ';
+  const ROUNDS = 5;
+  let round = 1;
+  let correct = 0;
+  let ended = false;
+
+  const arena = els.arena;
+  arena.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.id = 'mgQuiz';
+  arena.appendChild(wrap);
+
+  active = {
+    type: 'quiz', timers: [],
+    onCleanup: () => { ended = true; },
+  };
+
+  showQuizRound();
+
+  function showQuizRound() {
+    if (ended) return;
+    updateQuizHUD();
+    wrap.innerHTML = '';
+
+    const target = PLANTS[Math.floor(Math.random() * PLANTS.length)];
+    const wrongs = pickWrongs(target, 3);
+    const options = shuffle([target, ...wrongs]);
+
+    const display = document.createElement('div');
+    display.className = 'quiz-display';
+    const art = document.createElement('div');
+    art.className = 'art';
+    art.appendChild(buildPlantSVG(target));
+    display.appendChild(art);
+    wrap.appendChild(display);
+
+    const opts = document.createElement('div');
+    opts.className = 'quiz-options';
+    for (const p of options) {
+      const btn = document.createElement('button');
+      btn.textContent = p.name;
+      btn.addEventListener('click', () => {
+        if (ended) return;
+        opts.querySelectorAll('button').forEach(b => b.disabled = true);
+        if (p.id === target.id) {
+          correct++;
+          btn.classList.add('correct');
+        } else {
+          btn.classList.add('wrong');
+          opts.querySelectorAll('button').forEach(b => {
+            if (b.textContent === target.name) b.classList.add('correct');
+          });
+        }
+        const t = setTimeout(() => {
+          round++;
+          if (round > ROUNDS) finishQuiz();
+          else showQuizRound();
+        }, 850);
+        active.timers.push(t);
+      });
+      opts.appendChild(btn);
+    }
+    wrap.appendChild(opts);
+  }
+
+  function updateQuizHUD() {
+    els.timer.textContent = `ROUND ${round}/${ROUNDS}`;
+    els.score.textContent = correct > 0 ? `${correct} correct` : '';
+  }
+
+  function finishQuiz() {
+    if (ended) return;
+    ended = true;
+    const reward = correct * 15;
+    award(reward);
+    const title = correct === ROUNDS ? 'BOTANIST!' : correct === 0 ? 'NOPE…' : 'DONE';
+    showResult(title, `${correct} of ${ROUNDS} correct — +${reward} coins`);
+  }
+
+  function pickWrongs(target, n) {
+    const pool = PLANTS.filter(p => p.id !== target.id);
+    // Prefer plants in the same rarity for plausible distractors
+    const sameRarity = pool.filter(p => p.rarity === target.rarity);
+    const out = [];
+    const seen = new Set();
+    while (out.length < n && sameRarity.length > 0) {
+      const i = Math.floor(Math.random() * sameRarity.length);
+      const p = sameRarity.splice(i, 1)[0];
+      if (!seen.has(p.id)) { seen.add(p.id); out.push(p); }
+    }
+    while (out.length < n) {
+      const i = Math.floor(Math.random() * pool.length);
+      const p = pool.splice(i, 1)[0];
+      if (!seen.has(p.id)) { seen.add(p.id); out.push(p); }
+    }
+    return out;
+  }
+
+  function shuffle(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+}
+
+// ── Reaction Test ──────────────────────────────────────────────────────────
+
+function startReaction() {
+  els.title.textContent = 'REACTION TEST';
+  const ROUNDS = 3;
+  let round = 1;
+  let totalMs = 0;
+  let waiting = false;        // true once green is shown and we're waiting for click
+  let armedTimer = null;
+  let startTime = 0;
+  let ended = false;
+
+  const arena = els.arena;
+  arena.innerHTML = '';
+  const pad = document.createElement('div');
+  pad.id = 'mgReaction';
+  pad.className = 'waiting';
+  pad.textContent = 'GET READY…';
+  arena.appendChild(pad);
+
+  active = {
+    type: 'reaction', timers: [],
+    onCleanup: () => {
+      ended = true;
+      if (armedTimer) clearTimeout(armedTimer);
+      pad.removeEventListener('click', onClick);
+    },
+  };
+
+  pad.addEventListener('click', onClick);
+  updateReactionHUD();
+  scheduleArm();
+
+  function scheduleArm() {
+    if (ended) return;
+    waiting = false;
+    pad.className = 'waiting';
+    pad.textContent = 'WAIT…';
+    const delay = 900 + Math.random() * 2600;
+    armedTimer = setTimeout(() => {
+      if (ended) return;
+      pad.className = 'ready';
+      pad.textContent = 'CLICK!';
+      startTime = performance.now();
+      waiting = true;
+    }, delay);
+  }
+
+  function onClick() {
+    if (ended) return;
+    if (!waiting) {
+      // Too early
+      clearTimeout(armedTimer);
+      ended = true;
+      pad.className = 'shown';
+      pad.textContent = 'TOO EARLY';
+      showResult('JUMPED THE GUN', 'Clicked before green — +0 coins');
+      return;
+    }
+    const ms = performance.now() - startTime;
+    totalMs += ms;
+    waiting = false;
+    pad.className = 'shown';
+    pad.textContent = `${Math.round(ms)} ms`;
+    if (round >= ROUNDS) {
+      const t = setTimeout(finishReaction, 700);
+      active.timers.push(t);
+    } else {
+      const t = setTimeout(() => { round++; updateReactionHUD(); scheduleArm(); }, 700);
+      active.timers.push(t);
+    }
+  }
+
+  function updateReactionHUD() {
+    els.timer.textContent = `ROUND ${round}/${ROUNDS}`;
+    els.score.textContent = totalMs > 0 ? `avg ${Math.round(totalMs / Math.max(round - 1, 1))}ms` : '';
+  }
+
+  function finishReaction() {
+    if (ended) return;
+    ended = true;
+    const avg = totalMs / ROUNDS;
+    let reward, title;
+    if (avg < 250)      { reward = 100; title = 'LIGHTNING'; }
+    else if (avg < 350) { reward = 60;  title = 'QUICK'; }
+    else if (avg < 500) { reward = 30;  title = 'STEADY'; }
+    else                { reward = 10;  title = 'DONE'; }
+    award(reward);
+    showResult(title, `Avg ${Math.round(avg)}ms — +${reward} coins`);
   }
 }
 
