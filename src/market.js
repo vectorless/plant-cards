@@ -1,28 +1,15 @@
-import { state, cardCount, removeCard, addCard,
-         TRADER_PRICES } from './state.js';
+import { state, addCard, removeCard, cardCount, TRADER_PRICES } from './state.js';
 import { saveState } from './store.js';
-import { PLANTS, RARITIES, plantById, plantsByRarity } from './plants.js';
+import { RARITIES, plantById, plantsByRarity } from './plants.js';
 import { buildCard } from './svg.js';
+import { cloudConfigured, initCloud, whenReady, getDb, getUid,
+         getDisplayName, hasDisplayName, setDisplayName, ensureProfileLoaded } from './cloud.js';
+import {
+  collection, query, where, onSnapshot, orderBy, limit,
+  addDoc, deleteDoc, doc, getDocs, runTransaction, serverTimestamp,
+} from 'firebase/firestore';
 
 const $ = (id) => document.getElementById(id);
-
-const BOT_NAMES = [
-  'GreenThumb', 'RoseLover', 'IvyKing', 'WildSprout', 'PetalPusher',
-  'FernFan', 'BloomBuddy', 'LilyTender', 'SunflowerSal', 'CactusCarl',
-  'MossMaster', 'BonsaiBob', 'TulipTom', 'OrchidOlivia', 'DaisyDan',
-  'PoppyPete', 'VineVince', 'HerbHank', 'MelonMia', 'ZinniaZoe',
-  'NightOrchid', 'AshenLeaf', 'CopperVine', 'DewKeeper', 'StarBloom',
-];
-
-// Target number of active bot listings — we top up to this whenever the player
-// visits the market and enough time has passed.
-const BOT_TARGET = 28;
-// Min seconds between bot tick refreshes
-const BOT_TICK_SECONDS = 30;
-// Average lifetime of a bot listing (seconds) — past this it has a chance to vanish
-const BOT_LIFETIME_SECONDS = 12 * 60;
-// Per-minute probability a fairly-priced player listing gets bought
-const SALE_BASE_PER_MIN = 0.15;
 
 let els = {};
 let refreshCoinsFn = null;
@@ -30,6 +17,10 @@ let activeTab = 'browse';
 let filterRarity = 'all';
 let filterText = '';
 let sortMode = 'price-asc';
+
+let allListings = [];        // latest snapshot from Firestore
+let unsubListings = null;
+let cloudReady = false;
 
 export function initMarket(refreshCoins) {
   els = {
@@ -77,87 +68,42 @@ export function initMarket(refreshCoins) {
   els.modalPrice.addEventListener('input', validateModal);
 }
 
-export function showMarket() {
-  tickBots();
+export async function showMarket() {
+  if (!cloudConfigured()) {
+    renderSetupNotice();
+    return;
+  }
+  if (!cloudReady) {
+    renderLoading();
+    try {
+      await whenReady();
+      await ensureProfileLoaded();
+      subscribeListings();
+      cloudReady = true;
+    } catch (err) {
+      renderError(err.message);
+      return;
+    }
+  }
+  if (!hasDisplayName()) {
+    renderNamePrompt();
+    return;
+  }
+  await collectEarnings({ silent: true });
   render();
 }
 
-// ── Bot simulation ────────────────────────────────────────────────────────
-
-function tickBots() {
-  const now = Date.now();
-  const last = state.market.lastBotTick || 0;
-  const elapsed = (now - last) / 1000;
-  if (elapsed < BOT_TICK_SECONDS) {
-    simulateSales(elapsed, now);
-    return;
-  }
-
-  // Drop expired bot listings (probabilistically)
-  state.market.listings = state.market.listings.filter(l => {
-    if (l.isMine) return true;
-    const age = (now - l.postedAt) / 1000;
-    if (age > BOT_LIFETIME_SECONDS) return Math.random() > 0.3;
-    return true;
+function subscribeListings() {
+  if (unsubListings) unsubListings();
+  const db = getDb();
+  const q = query(collection(db, 'listings'),
+                  orderBy('postedAt', 'desc'), limit(200));
+  unsubListings = onSnapshot(q, (snap) => {
+    allListings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (state.view === 'market' && cloudReady && hasDisplayName()) render();
+  }, (err) => {
+    console.error('Listings subscription error:', err);
   });
-
-  // Top up bot listings to target
-  let botCount = state.market.listings.filter(l => !l.isMine).length;
-  // On first visit (last === 0), seed a healthy roster
-  const toAdd = last === 0 ? BOT_TARGET : Math.min(BOT_TARGET - botCount, Math.ceil(elapsed / 30));
-  for (let i = 0; i < toAdd; i++) {
-    state.market.listings.push(makeBotListing(now));
-  }
-
-  // Simulate sales of player listings during the time elapsed
-  simulateSales(elapsed, now);
-
-  state.market.lastBotTick = now;
-  saveState();
-}
-
-function makeBotListing(now) {
-  const plant = PLANTS[Math.floor(Math.random() * PLANTS.length)];
-  const base = TRADER_PRICES[plant.rarity];
-  const price = Math.max(1, Math.round(base * (0.6 + Math.random() * 0.9)));
-  return {
-    id: 'b_' + Math.random().toString(36).slice(2, 10),
-    plantId: plant.id,
-    rarity: plant.rarity,
-    sellerName: pickBotName(),
-    price,
-    postedAt: now - Math.floor(Math.random() * 300_000),
-    isMine: false,
-  };
-}
-
-function pickBotName() {
-  const base = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
-  return Math.random() < 0.45 ? base + Math.floor(Math.random() * 100) : base;
-}
-
-function simulateSales(elapsedSeconds, now) {
-  const minutes = elapsedSeconds / 60;
-  if (minutes <= 0) return;
-  let totalEarnings = 0;
-  const remaining = [];
-  for (const l of state.market.listings) {
-    if (!l.isMine) { remaining.push(l); continue; }
-    const fair = TRADER_PRICES[l.rarity];
-    // Modifier: 1 at fair price, 0.2 at 2x fair price, 1.4 below fair
-    const ratio = l.price / fair;
-    const mod = ratio <= 1 ? 1.4 - 0.4 * ratio : Math.max(0.05, 1 / (ratio * ratio));
-    const chance = 1 - Math.pow(1 - SALE_BASE_PER_MIN * mod, minutes);
-    if (Math.random() < chance) {
-      totalEarnings += l.price;
-    } else {
-      remaining.push(l);
-    }
-  }
-  if (totalEarnings > 0) {
-    state.market.earnings += totalEarnings;
-  }
-  state.market.listings = remaining;
 }
 
 // ── Render ────────────────────────────────────────────────────────────────
@@ -167,13 +113,14 @@ function render() {
     b.classList.toggle('active', b.dataset.tab === activeTab);
   });
 
-  const myActive = state.market.listings.filter(l => l.isMine).length;
+  const uid = getUid();
+  const myActive = allListings.filter(l => l.sellerUid === uid).length;
   els.tabs.querySelector('[data-tab="mine"]').textContent = `MY LISTINGS (${myActive})`;
 
-  const earnings = state.market.earnings;
-  els.earningsAmt.textContent = `+${earnings}`;
-  els.earnings.classList.toggle('has-earnings', earnings > 0);
-  els.earningsBtn.disabled = earnings <= 0;
+  els.earnings.classList.remove('has-earnings');
+  els.earningsAmt.textContent = '+0';
+  els.earningsBtn.disabled = true;
+  // earnings UI is updated by collectEarnings() at refresh time
 
   els.body.innerHTML = '';
   if (activeTab === 'browse')      renderBrowse();
@@ -181,23 +128,24 @@ function render() {
 }
 
 function renderBrowse() {
-  let listings = state.market.listings.filter(l => !l.isMine);
+  const uid = getUid();
+  let listings = allListings.filter(l => l.sellerUid !== uid);
   if (filterRarity !== 'all') listings = listings.filter(l => l.rarity === filterRarity);
   if (filterText) {
-    listings = listings.filter(l =>
-      plantById(l.plantId).name.toLowerCase().includes(filterText) ||
-      l.sellerName.toLowerCase().includes(filterText));
+    listings = listings.filter(l => {
+      const plant = plantById(l.plantId);
+      const nm = plant ? plant.name.toLowerCase() : '';
+      const sn = (l.sellerName || '').toLowerCase();
+      return nm.includes(filterText) || sn.includes(filterText);
+    });
   }
   listings.sort((a, b) =>
     sortMode === 'price-asc'  ? a.price - b.price :
     sortMode === 'price-desc' ? b.price - a.price :
-                                b.postedAt - a.postedAt);
+                                (b.postedAtMs ?? 0) - (a.postedAtMs ?? 0));
 
   if (listings.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'market-empty';
-    empty.textContent = 'No listings match — try widening your filters.';
-    els.body.appendChild(empty);
+    showEmpty('No listings match — try widening your filters.');
     return;
   }
 
@@ -214,12 +162,12 @@ function buildBrowseCell(l) {
   const cell = document.createElement('div');
   cell.className = 'market-cell';
 
-  cell.appendChild(buildCard(plant));
+  if (plant) cell.appendChild(buildCard(plant));
 
   const meta = document.createElement('div');
   meta.className = 'market-meta';
   meta.innerHTML =
-    `<div class="seller">${escapeHTML(l.sellerName)}</div>` +
+    `<div class="seller">${escapeHTML(l.sellerName || 'anonymous')}</div>` +
     `<div class="price">${l.price} coins</div>`;
   cell.appendChild(meta);
 
@@ -231,19 +179,17 @@ function buildBrowseCell(l) {
   } else {
     btn.textContent = 'BUY';
   }
-  btn.addEventListener('click', () => buyListing(l.id));
+  btn.addEventListener('click', () => buyListing(l));
   cell.appendChild(btn);
 
   return cell;
 }
 
 function renderMine() {
-  const mine = state.market.listings.filter(l => l.isMine);
+  const uid = getUid();
+  const mine = allListings.filter(l => l.sellerUid === uid);
   if (mine.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'market-empty';
-    empty.textContent = 'You have no active listings. Click "+ LIST A CARD" to put one up.';
-    els.body.appendChild(empty);
+    showEmpty('You have no active listings. Click "+ LIST A CARD" to put one up.');
     return;
   }
   const grid = document.createElement('div');
@@ -253,7 +199,7 @@ function renderMine() {
     const cell = document.createElement('div');
     cell.className = 'market-cell mine';
 
-    cell.appendChild(buildCard(plant));
+    if (plant) cell.appendChild(buildCard(plant));
 
     const meta = document.createElement('div');
     meta.className = 'market-meta';
@@ -265,7 +211,7 @@ function renderMine() {
     const btn = document.createElement('button');
     btn.className = 'market-cancel';
     btn.textContent = 'CANCEL';
-    btn.addEventListener('click', () => cancelListing(l.id));
+    btn.addEventListener('click', () => cancelListing(l));
     cell.appendChild(btn);
 
     grid.appendChild(cell);
@@ -273,41 +219,165 @@ function renderMine() {
   els.body.appendChild(grid);
 }
 
-// ── Actions ───────────────────────────────────────────────────────────────
+function showEmpty(text) {
+  const empty = document.createElement('div');
+  empty.className = 'market-empty';
+  empty.textContent = text;
+  els.body.appendChild(empty);
+}
 
-function buyListing(id) {
-  const i = state.market.listings.findIndex(l => l.id === id);
-  if (i < 0) return;
-  const l = state.market.listings[i];
-  if (l.isMine) return;
+function renderLoading() {
+  els.body.innerHTML = '';
+  showEmpty('Connecting to the market…');
+}
+
+function renderError(msg) {
+  els.body.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'market-empty';
+  div.textContent = 'Market unavailable: ' + msg;
+  els.body.appendChild(div);
+}
+
+function renderSetupNotice() {
+  els.body.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = 'market-empty';
+  div.innerHTML =
+    '<div style="font-size:14px;color:#ffe78a;letter-spacing:2px;margin-bottom:10px;">MARKET NOT CONFIGURED</div>' +
+    '<div>This is a real cross-device market and needs a Firebase backend.</div>' +
+    '<div style="margin-top:8px;">Follow <code>SETUP.md</code> at the project root and paste your Firebase config into <code>src/firebase-config.js</code>.</div>';
+  els.body.appendChild(div);
+}
+
+function renderNamePrompt() {
+  els.body.innerHTML = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'market-empty';
+  wrap.style.maxWidth = '420px';
+  wrap.style.margin = '40px auto';
+
+  const title = document.createElement('div');
+  title.style.cssText = 'font-size:14px;color:#ffe78a;letter-spacing:3px;margin-bottom:12px;';
+  title.textContent = 'CHOOSE A DISPLAY NAME';
+  wrap.appendChild(title);
+
+  const sub = document.createElement('div');
+  sub.style.cssText = 'margin-bottom:18px;';
+  sub.textContent = 'Other players will see this on your listings.';
+  wrap.appendChild(sub);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 24;
+  input.placeholder = 'e.g. RoseLover';
+  input.style.cssText =
+    'padding:8px 12px;font-size:14px;background:#0a0f0c;color:#e0e8de;' +
+    'border:1px solid #4a5a4a;border-radius:3px;font-family:inherit;width:100%;margin-bottom:12px;';
+  wrap.appendChild(input);
+
+  const btn = document.createElement('button');
+  btn.style.cssText =
+    'padding:10px 24px;font-size:12px;letter-spacing:3px;background:#2a200c;' +
+    'color:#ffe78a;border:1px solid #d6b048;border-radius:3px;cursor:pointer;font-family:inherit;';
+  btn.textContent = 'CONTINUE';
+  btn.addEventListener('click', async () => {
+    const ok = await setDisplayName(input.value);
+    if (ok) showMarket();
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') btn.click();
+  });
+  wrap.appendChild(btn);
+
+  els.body.appendChild(wrap);
+  setTimeout(() => input.focus(), 0);
+}
+
+// ── Buy / Cancel / Post ───────────────────────────────────────────────────
+
+async function buyListing(l) {
   if (state.coins < l.price) return;
+  const db = getDb();
+  const uid = getUid();
+  if (!uid) return;
+
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref = doc(db, 'listings', l.id);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) throw new Error('Listing no longer available');
+      const data = snap.data();
+      if (data.sellerUid === uid) throw new Error("Can't buy your own listing");
+      const saleRef = doc(collection(db, 'pendingSales'));
+      tx.set(saleRef, {
+        forUid: data.sellerUid,
+        buyerUid: uid,
+        plantId: data.plantId,
+        price: data.price,
+        createdAt: serverTimestamp(),
+      });
+      tx.delete(ref);
+    });
+  } catch (err) {
+    alert(err.message || 'Could not complete purchase.');
+    return;
+  }
+
   state.coins -= l.price;
   addCard(l.plantId);
-  state.market.listings.splice(i, 1);
   saveState();
   refreshCoinsFn();
   render();
 }
 
-function cancelListing(id) {
-  const i = state.market.listings.findIndex(l => l.id === id);
-  if (i < 0) return;
-  const l = state.market.listings[i];
-  if (!l.isMine) return;
+async function cancelListing(l) {
+  const db = getDb();
+  const uid = getUid();
+  if (!uid || l.sellerUid !== uid) return;
+  try {
+    await deleteDoc(doc(db, 'listings', l.id));
+  } catch (err) {
+    alert('Could not cancel: ' + err.message);
+    return;
+  }
   addCard(l.plantId);
-  state.market.listings.splice(i, 1);
   saveState();
   render();
 }
 
-function collectEarnings() {
-  const amt = state.market.earnings;
-  if (amt <= 0) return;
-  state.coins += amt;
-  state.market.earnings = 0;
-  saveState();
-  refreshCoinsFn();
-  render();
+async function collectEarnings({ silent = false } = {}) {
+  const db = getDb();
+  const uid = getUid();
+  if (!db || !uid) return 0;
+  const q = query(collection(db, 'pendingSales'), where('forUid', '==', uid));
+  let snap;
+  try {
+    snap = await getDocs(q);
+  } catch (err) {
+    if (!silent) console.error(err);
+    return 0;
+  }
+  let total = 0;
+  for (const d of snap.docs) {
+    total += (d.data().price | 0);
+  }
+  if (total > 0) {
+    state.coins += total;
+    saveState();
+    refreshCoinsFn();
+    // Delete the consumed sales so we don't double-credit
+    await Promise.all(snap.docs.map(d => deleteDoc(d.ref).catch(() => {})));
+    if (!silent) {
+      els.earningsAmt.textContent = `+${total}`;
+      els.earnings.classList.add('has-earnings');
+      setTimeout(() => {
+        els.earnings.classList.remove('has-earnings');
+        els.earningsAmt.textContent = '+0';
+      }, 4000);
+    }
+  }
+  return total;
 }
 
 // ── List-a-card modal ─────────────────────────────────────────────────────
@@ -382,22 +452,37 @@ function validateModal() {
   els.modalPost.disabled = !pickedPlantId || !Number.isFinite(price) || price <= 0 || price > 999999;
 }
 
-function postListing() {
+async function postListing() {
   const price = parseInt(els.modalPrice.value, 10);
   if (!pickedPlantId || !Number.isFinite(price) || price <= 0) return;
   if (cardCount(pickedPlantId) <= 0) return;
+
+  const db = getDb();
+  const uid = getUid();
+  if (!db || !uid) { alert('Not connected to market.'); return; }
+
   const plant = plantById(pickedPlantId);
   if (!removeCard(pickedPlantId, 1)) return;
-  state.market.listings.push({
-    id: 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
-    plantId: plant.id,
-    rarity: plant.rarity,
-    sellerName: 'you',
-    price,
-    postedAt: Date.now(),
-    isMine: true,
-  });
   saveState();
+
+  els.modalPost.disabled = true;
+  try {
+    await addDoc(collection(db, 'listings'), {
+      sellerUid: uid,
+      sellerName: getDisplayName() || 'anonymous',
+      plantId: plant.id,
+      rarity: plant.rarity,
+      price,
+      postedAt: serverTimestamp(),
+      postedAtMs: Date.now(),
+    });
+  } catch (err) {
+    addCard(pickedPlantId);  // refund the card on failure
+    saveState();
+    alert('Could not post: ' + err.message);
+    els.modalPost.disabled = false;
+    return;
+  }
   closeListModal();
   activeTab = 'mine';
   render();
@@ -408,3 +493,5 @@ function escapeHTML(s) {
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
 }
+
+export { initCloud };

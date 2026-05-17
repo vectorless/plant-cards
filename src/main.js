@@ -2,11 +2,13 @@ import { state, tickCoins, applyOfflineCatchup,
          dailyEligible, claimDaily, DAILY_BONUS } from './state.js';
 import { loadState, saveState } from './store.js';
 import { initUI, refreshCoins, revealAll } from './ui.js';
+import { initCloud } from './cloud.js';
 
 loadState();
 applyOfflineCatchup();
 saveState();
 
+initCloud();
 initUI();
 
 if (dailyEligible()) showDailyBonus();
