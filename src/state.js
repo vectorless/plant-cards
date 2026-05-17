@@ -8,6 +8,7 @@ export const state = {
   lastDailyClaim: null,
   traderDate: null,
   traderPurchased: [false, false, false],
+  market: { listings: [], earnings: 0, lastBotTick: 0 },
   view: 'shop',
   opening: null,
 };
