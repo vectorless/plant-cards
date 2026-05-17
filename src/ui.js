@@ -124,9 +124,11 @@ function tryBuyWateringPack(tier, n = 1) {
   saveState();
   refreshCoins();
 
-  const cans = [];
-  for (let i = 0; i < n; i++) cans.push(...openWateringPack(tier));
-  state.opening = { kind: 'water', tier, cards: cans, revealed: 0 };
+  const packs = [];
+  for (let i = 0; i < n; i++) {
+    packs.push({ items: openWateringPack(tier), opened: n === 1, revealed: 0 });
+  }
+  state.opening = { kind: 'water', tier, packs };
   state.view = 'opening';
   renderOpening();
   if (state.autoOpen) revealAll();
@@ -193,9 +195,11 @@ function tryBuyCardPack(tier, n = 1) {
   saveState();
   refreshCoins();
 
-  const cards = [];
-  for (let i = 0; i < n; i++) cards.push(...openPack(tier));
-  state.opening = { kind: 'card', tier, cards, revealed: 0, newlyOwned: [] };
+  const packs = [];
+  for (let i = 0; i < n; i++) {
+    packs.push({ items: openPack(tier), opened: n === 1, revealed: 0 });
+  }
+  state.opening = { kind: 'card', tier, packs, newlyOwned: [] };
   state.view = 'opening';
   renderOpening();
   if (state.autoOpen) revealAll();
@@ -208,55 +212,134 @@ function tryBuySeedPack(tier, n = 1) {
   saveState();
   refreshCoins();
 
-  const seeds = [];
-  for (let i = 0; i < n; i++) seeds.push(...openSeedPack(tier));
-  state.opening = { kind: 'seed', tier, cards: seeds, revealed: 0 };
+  const packs = [];
+  for (let i = 0; i < n; i++) {
+    packs.push({ items: openSeedPack(tier), opened: n === 1, revealed: 0 });
+  }
+  state.opening = { kind: 'seed', tier, packs };
   state.view = 'opening';
   renderOpening();
   if (state.autoOpen) revealAll();
+}
+
+function packBackIcon() {
+  const k = state.opening.kind;
+  return k === 'seed' ? '🥜' : k === 'water' ? '💦' : '🌱';
+}
+
+function totalItems() {
+  return state.opening.packs.reduce((s, p) => s + p.items.length, 0);
+}
+
+function totalRevealed() {
+  return state.opening.packs.reduce((s, p) => s + p.revealed, 0);
 }
 
 function renderOpening() {
   els.opening.classList.remove('hidden');
   els.openingCards.innerHTML = '';
   els.continueBtn.classList.add('hidden');
-  const kind = state.opening.kind;
-  els.openingHint.textContent =
-    kind === 'seed'  ? 'Click packets to reveal seeds' :
-    kind === 'water' ? 'Click to reveal watering cans' :
-                       'Click cards to reveal';
+  els.openingCards.style.flexDirection =
+    state.opening.packs.length > 1 ? 'column' : 'row';
 
-  const backIcon = kind === 'seed' ? '🥜' : kind === 'water' ? '💦' : '🌱';
-
-  state.opening.cards.forEach((item, i) => {
-    const flipper = document.createElement('div');
-    flipper.className = 'flipper';
-    flipper.dataset.idx = i;
-
-    const back = document.createElement('div');
-    back.className = 'face back';
-    back.textContent = backIcon;
-    flipper.appendChild(back);
-
-    flipper.addEventListener('click', () => revealOne(i, flipper));
-    els.openingCards.appendChild(flipper);
-  });
+  for (let i = 0; i < state.opening.packs.length; i++) {
+    const wrap = document.createElement('div');
+    wrap.dataset.packIdx = i;
+    renderPackWrap(wrap, i);
+    els.openingCards.appendChild(wrap);
+  }
+  updateOpeningHint();
 }
 
-function revealOne(i, flipper) {
+function renderPackWrap(wrap, packIdx) {
+  wrap.innerHTML = '';
+  const pack = state.opening.packs[packIdx];
+  const multi = state.opening.packs.length > 1;
+
+  if (!pack.opened) {
+    wrap.className = '';
+    wrap.appendChild(buildPackTile(packIdx));
+    return;
+  }
+
+  wrap.className = multi ? 'pack-group' : '';
+  if (multi) {
+    const label = document.createElement('div');
+    label.className = 'pack-group-label';
+    label.textContent = `PACK ${packIdx + 1}`;
+    wrap.appendChild(label);
+  }
+
+  const row = document.createElement('div');
+  row.className = multi ? 'pack-cards' : '';
+  pack.items.forEach((item, j) => {
+    row.appendChild(buildFlipper(packIdx, j));
+  });
+  if (multi) wrap.appendChild(row);
+  else for (const child of [...row.children]) wrap.appendChild(child);
+}
+
+function buildPackTile(packIdx) {
+  const tile = document.createElement('div');
+  tile.className = 'pack-tile';
+  const icon = document.createElement('div');
+  icon.className = 'pack-icon';
+  icon.textContent = packBackIcon();
+  tile.appendChild(icon);
+  const label = document.createElement('div');
+  label.className = 'pack-label';
+  label.textContent = `PACK ${packIdx + 1} / ${state.opening.packs.length}`;
+  tile.appendChild(label);
+  const count = document.createElement('div');
+  count.className = 'pack-count';
+  count.textContent = `${state.opening.packs[packIdx].items.length} ${itemLabel()}`;
+  tile.appendChild(count);
+  tile.addEventListener('click', () => openPackTile(packIdx));
+  return tile;
+}
+
+function itemLabel() {
+  const k = state.opening.kind;
+  return k === 'seed' ? 'seeds' : k === 'water' ? 'cans' : 'cards';
+}
+
+function buildFlipper(packIdx, cardIdx) {
+  const flipper = document.createElement('div');
+  flipper.className = 'flipper';
+  flipper.dataset.packIdx = packIdx;
+  flipper.dataset.cardIdx = cardIdx;
+
+  const back = document.createElement('div');
+  back.className = 'face back';
+  back.textContent = packBackIcon();
+  flipper.appendChild(back);
+
+  flipper.addEventListener('click', () => revealOne(packIdx, cardIdx, flipper));
+  return flipper;
+}
+
+function openPackTile(packIdx) {
+  const pack = state.opening.packs[packIdx];
+  if (pack.opened) return;
+  pack.opened = true;
+  const wrap = els.openingCards.querySelector(`[data-pack-idx="${packIdx}"]`);
+  if (wrap) renderPackWrap(wrap, packIdx);
+  updateOpeningHint();
+}
+
+function revealOne(packIdx, cardIdx, flipper) {
   if (flipper.classList.contains('flipped')) return;
-  const item = state.opening.cards[i];
+  const pack = state.opening.packs[packIdx];
+  const item = pack.items[cardIdx];
   const front = document.createElement('div');
   front.className = 'face front';
 
   if (state.opening.kind === 'seed') {
-    const rarity = item;
-    addSeed(rarity);
-    front.appendChild(buildSeedFace(rarity));
+    addSeed(item);
+    front.appendChild(buildSeedFace(item));
   } else if (state.opening.kind === 'water') {
-    const rarity = item;
-    addWatering(rarity);
-    front.appendChild(buildWaterFace(rarity));
+    addWatering(item);
+    front.appendChild(buildWaterFace(item));
   } else {
     const plant = plantById(item);
     const isNew = addCard(item);
@@ -265,22 +348,45 @@ function revealOne(i, flipper) {
   }
   flipper.appendChild(front);
   flipper.classList.add('flipped');
-  state.opening.revealed++;
+  pack.revealed++;
 
-  if (state.opening.revealed === state.opening.cards.length) {
-    saveState();
-    if (state.opening.kind === 'seed') {
-      els.openingHint.textContent = `${state.opening.cards.length} seed${state.opening.cards.length > 1 ? 's' : ''} added — plant them in your garden`;
-    } else if (state.opening.kind === 'water') {
-      els.openingHint.textContent = `${state.opening.cards.length} watering can${state.opening.cards.length > 1 ? 's' : ''} added — use them in your garden`;
-    } else {
-      const n = state.opening.newlyOwned.length;
-      els.openingHint.textContent = n > 0
-        ? `${n} new card${n > 1 ? 's' : ''} added to your collection`
-        : 'All duplicates — better luck next pack';
-    }
-    els.continueBtn.classList.remove('hidden');
+  if (totalRevealed() === totalItems()) finishOpening();
+  else updateOpeningHint();
+}
+
+function updateOpeningHint() {
+  const kind = state.opening.kind;
+  const packs = state.opening.packs;
+  const unopened = packs.filter(p => !p.opened).length;
+  if (unopened > 0) {
+    els.openingHint.textContent = packs.length > 1
+      ? `Click a pack to open it — ${unopened} of ${packs.length} left`
+      : (kind === 'seed'  ? 'Click packets to reveal seeds'
+       : kind === 'water' ? 'Click to reveal watering cans'
+       :                    'Click cards to reveal');
+    return;
   }
+  // All packs opened; some cards still to flip
+  els.openingHint.textContent =
+    kind === 'seed'  ? 'Click packets to reveal seeds' :
+    kind === 'water' ? 'Click to reveal watering cans' :
+                       'Click cards to reveal';
+}
+
+function finishOpening() {
+  saveState();
+  const total = totalItems();
+  if (state.opening.kind === 'seed') {
+    els.openingHint.textContent = `${total} seed${total > 1 ? 's' : ''} added — plant them in your garden`;
+  } else if (state.opening.kind === 'water') {
+    els.openingHint.textContent = `${total} watering can${total > 1 ? 's' : ''} added — use them in your garden`;
+  } else {
+    const n = state.opening.newlyOwned.length;
+    els.openingHint.textContent = n > 0
+      ? `${n} new card${n > 1 ? 's' : ''} added to your collection`
+      : 'All duplicates — better luck next pack';
+  }
+  els.continueBtn.classList.remove('hidden');
 }
 
 function buildWaterFace(rarity) {
@@ -347,8 +453,10 @@ function closeOpening() {
 
 export function revealAll() {
   if (!state.opening) return;
+  state.opening.packs.forEach((p, i) => { if (!p.opened) openPackTile(i); });
   document.querySelectorAll('.flipper:not(.flipped)').forEach(f => {
-    const i = parseInt(f.dataset.idx, 10);
-    revealOne(i, f);
+    const pi = parseInt(f.dataset.packIdx, 10);
+    const ci = parseInt(f.dataset.cardIdx, 10);
+    revealOne(pi, ci, f);
   });
 }
